@@ -1,0 +1,6 @@
+*~
+*.beam
+Mnesia*
+*dump
+*log
+*.pyc
