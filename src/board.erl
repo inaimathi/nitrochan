@@ -12,7 +12,7 @@
 -record(thread, {id, board, last_update, first_comment, last_comments=[], comment_count}).
 -record(comment, {id, thread, user, tripcode, body, file}).
 
--export([list/0, new/1, summarize/1, new_thread/2, get_thread/2, reply/3, last_n/3]).
+-export([list/0, new/1, summarize/1, new_thread/2, get_thread/2, reply/3]).
 
 list() -> do(qlc:q([X#board.name || X <- mnesia:table(board)])).
 
@@ -20,7 +20,14 @@ new(BoardName) ->
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(#board{name=BoardName, created=now()}) end),
     supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName)).
 
+summarize({thread, Rec}) ->
+    {Rec#thread.id, Rec#thread.last_update, Rec#thread.comment_count,
+     [Rec#thread.first_comment | Rec#thread.last_comments]};
+summarize({comment, Rec}) ->
+    {Rec#comment.id, Rec#comment.user, Rec#comment.tripcode, 
+     Rec#comment.body, Rec#comment.file};
 summarize(Board) -> gen_server:call(Board, summarize).
+
 get_thread(Board, Thread) -> gen_server:call(Board, {get_thread, Thread}).
 
 new_thread(Board, {User, Tripcode, Comment, File}) -> 
@@ -30,38 +37,42 @@ reply(Board, Thread, {User, Tripcode, Body, File}) ->
     gen_server:call(Board, {reply, Thread, User, Tripcode, Body, File}).
 
 handle_call(summarize, _From, BoardName) -> 
-    Res = do(qlc:q([{X#thread.last_update, X#thread.comment_count, [X#thread.first_comment | X#thread.last_comments]}
-		    || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
-    {reply, Res, BoardName};
+    Res = do(qlc:q([summarize({thread, X}) || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
+    {reply, lists:sort(fun sort_threads/2, Res), BoardName};
 handle_call({get_thread, Thread}, _From, BoardName) -> 
     Res = do(qlc:q([{X#comment.id, X#comment.user, X#comment.tripcode, X#comment.body, X#comment.file} 
 		    || X <- mnesia:table(comment), X#comment.thread =:= Thread])),
     {reply, Res, BoardName};
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
-    ThreadId = now(), 
-    CommentId = now(),
-    Comment = #comment{id=CommentId, thread=ThreadId, user=User, tripcode=Tripcode, body=Body, file=File},
-    Thread = #thread{id=ThreadId, board=BoardName, last_update=ThreadId, comment_count=1, 
-		     first_comment={CommentId, User, Tripcode, Body, File}},
-    {atomic, ok} = mnesia:transation(fun () -> mnesia:write(Thread), mnesia:write(Comment) end),
-    {reply, {ThreadId, CommentId} , BoardName};
+    Id = now(),
+    Comment = #comment{id=Id, thread=Id, user=User, tripcode=Tripcode, body=Body, file=File},
+    Thread = #thread{id=Id, board=BoardName, last_update=Id, comment_count=1, 
+		     first_comment={Id, User, Tripcode, Body, File}},
+    {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Thread), mnesia:write(Comment) end),
+    {reply, summarize({thread, Thread}), BoardName};
 handle_call({reply, Thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     CommentId = now(),
     Comment = #comment{id=CommentId, thread=Thread, user=User, tripcode=Tripcode, body=Body, file=File},
-    Thread = do(qlc:q([X || X <- mnesia:table(thread), X#thread.id =:= Thread])),
-    LastComm = last_n(Thread#thread.last_comments, {CommentId, User, Tripcode, Body, File}, 4),
-    Updated = Thread#thread{last_update=CommentId, 
-			    comment_count=Thread#thread.comment_count + 1,
-			    last_comments=LastComm},
+    [Rec] = do(qlc:q([X || X <- mnesia:table(thread), X#thread.id =:= Thread])),
+    LastComm = last_n(Rec#thread.last_comments, {CommentId, User, Tripcode, Body, File}, 4),
+    Updated = Rec#thread{last_update=CommentId, 
+			 comment_count=Rec#thread.comment_count + 1,
+			 last_comments=LastComm},
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Comment), mnesia:write(Updated) end),
-    {reply, CommentId, BoardName}.
+    {reply, summarize({comment, Comment}), BoardName}.
 
-%% Given a list, a NewElem and an N,
-%% returns the last N elements of List ++ [NewElem]
+%%Id = board:new_thread(board, {"leo", "trip", "Fuck you fuckers", ""}),
+%%board:reply(board, Id, {"FCG", "triptwo", "SHUT THE MOTHERFUCK UP DUNKASS", "f-u.jpg"}).
+
 last_n(List, NewElem, N) ->
     Res = lists:sublist([NewElem | lists:reverse(List)], N),
     lists:reverse(Res).
-	    
+
+sort_threads({_, A, _, _}, {_, B, _, _}) ->
+    now_to_seconds(A) > now_to_seconds(B).
+
+now_to_seconds(Now) ->
+    calendar:datetime_to_gregorian_seconds(calendar:now_to_datetime(Now)).
 
 %%%%%%%%%%%%%%%%%%%% DB-related
 do(Q) -> 
