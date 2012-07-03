@@ -28,11 +28,13 @@ gen-build: gen-rel
 mnesia-create:
 	erl -name erl_chan@127.0.1.1 -eval 'mnesia:create_schema([node()]).' $(erl_stop)
 
-start: 
-	screen -S erl_chan $(ERL) -name erl_chan@127.0.1.1 $(erl_start)
+start: start-chan start-nitro
 
-attach:
-	screen -r erl_chan
+start-chan:
+	screen -d -m -S erl_chan $(ERL) -name erl_chan@127.0.1.1 $(erl_start)
+
+start-nitro:
+	screen -d -m -S nitro-erl_chan nitrogen/rel/nitrogen/bin/nitrogen console -setcookie GUZBQVNRZRAIHWNNSECV
 
 clean:
 	rm ebin/* include/* priv/* 
