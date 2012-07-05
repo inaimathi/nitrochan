@@ -25,7 +25,6 @@ body() ->
 
 inner_body({Board}) -> 
     wf:state(board, list_to_atom(Board)),
-    wf:state(thread, false),
     wf:comet_global(fun () -> post_loop() end, wf:state(board)),
     Threads =  rpc:call(?NODE, board, summarize, [wf:state(board)]),
     [ 
@@ -101,36 +100,44 @@ month_name(Num) ->
 %%%%%%%%%%%%%%%%%%%% Event functions %%%
 start_upload_event(image) -> ok.
 
+collect_tripcode() ->
+    IP = lists:map(fun erlang:integer_to_list/1, tuple_to_list(wf:peer_ip())),
+    string:join([wf:q(txt_tripcode) | IP], ".").
+
 collect_comment() ->
-    case {wf:q(txt_comment), wf:q(txt_image)} of
-	{"", ""} -> false;
-	_ -> IP = string:join(lists:map(fun erlang:integer_to_list/1, tuple_to_list(wf:peer_ip())), ","),
-	     {wf:q(txt_user_name), 
-	      string:join([IP, wf:q(txt_tripcode)], "||"), 
-	      wf:q(txt_comment), 
-	      wf:q(txt_image)}
+    Body = wf:q(txt_comment), 
+    Image = wf:q(txt_image),
+    case {Body, Image} of
+	{"", undefined} -> 
+	    false;
+	_ -> 
+	    {wf:q(txt_user_name), collect_tripcode(), Body}
     end.
+
+post(Comment) ->
+    Board = wf:state(board),
+    case wf:state(thread) of
+	undefined -> 
+	    Res = {Id, _, _, _} = rpc:call(?NODE, board, new_thread, [Board, Comment]),
+	    wf:send_global(Board, {thread, Res}),
+	    wf:redirect(uri(Id));
+	Thread -> 
+	    Res = rpc:call(?NODE, board, reply, [Board, Thread, Comment]),
+	    wf:send_global(Thread, {message, Res})
+    end,
+    wf:set(txt_comment, "").
 
 finish_upload_event(_Tag, undefined, _, _) ->
     %% Comment with no image (require a comment in this case)
     case collect_comment() of
 	false -> wf:flash("You need either a comment or an image");
-	Comment -> Board = wf:state(board),
-		   case wf:state(thread) of
-		       false -> 
-			   Res = {Id, _, _, _} = rpc:call(?NODE, board, new_thread, [Board, Comment]),
-			   wf:send_global(Board, {thread, Res}),
-			   wf:redirect(uri(Id));
-		       Thread -> 
-			   Res = rpc:call(?NODE, board, reply, [Board, Thread, Comment]),
-			   wf:send_global(Thread, {message, Res})
-		   end,
-		   wf:set(txt_comment, "")
+	{User, Trip, Body} -> post({User, Trip, Body, undefined})
     end;
 finish_upload_event(_Tag, FileName, LocalFileData, Node) ->
     %% Comment with image (no other fields required)
     FileSize = filelib:file_size(LocalFileData),
     wf:flash(wf:f("Uploaded file: ~s (~p bytes) on node ~s.", [FileName, FileSize, Node])),
+    post(collect_comment()),
     ok.
 
 post_loop() ->
