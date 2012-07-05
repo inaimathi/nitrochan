@@ -45,17 +45,19 @@ handle_call({get_thread, Thread}, _From, BoardName) ->
     {reply, Res, BoardName};
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     Id = now(),
-    Comment = #comment{id=Id, thread=Id, user=User, tripcode=Tripcode, body=Body, file=File},
+    TripHash = erlsha2:sha256(Tripcode),
+    Comment = #comment{id=Id, thread=Id, user=User, tripcode=TripHash, body=Body, file=File},
     Thread = #thread{id=Id, board=BoardName, last_update=Id, comment_count=1, 
-		     first_comment={Id, User, Tripcode, Body, File}},
+		     first_comment={Id, User, TripHash, Body, File}},
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Thread), mnesia:write(Comment) end),
     {reply, summarize({thread, Thread}), BoardName};
 handle_call({reply, Thread, User, Tripcode, Body, File}, _From, BoardName) -> 
-    CommentId = now(),
-    Comment = #comment{id=CommentId, thread=Thread, user=User, tripcode=Tripcode, body=Body, file=File},
+    Id = now(),
+    TripHash = erlsha2:sha256(Tripcode),
+    Comment = #comment{id=Id, thread=Thread, user=User, tripcode=TripHash, body=Body, file=File},
     [Rec] = do(qlc:q([X || X <- mnesia:table(thread), X#thread.id =:= Thread])),
-    LastComm = last_n(Rec#thread.last_comments, {CommentId, User, Tripcode, Body, File}, 4),
-    Updated = Rec#thread{last_update=CommentId, 
+    LastComm = last_n(Rec#thread.last_comments, {Id, User, TripHash, Body, File}, 4),
+    Updated = Rec#thread{last_update=Id,
 			 comment_count=Rec#thread.comment_count + 1,
 			 last_comments=LastComm},
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Comment), mnesia:write(Updated) end),

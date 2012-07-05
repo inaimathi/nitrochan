@@ -5,7 +5,6 @@
 
 -define(NODE, 'erl_chan@127.0.1.1').
 
-
 main() -> #template { file="./site/templates/bare.html" }.
 
 title() -> "View".
@@ -40,7 +39,7 @@ inner_body({Board, Thread}) ->
     wf:comet_global(fun () -> post_loop() end, wf:state(thread)),
     Comments = rpc:call(?NODE, board, get_thread, [wf:state(board), wf:state(thread)]),
     [ 
-      #h1 { text="Showing Thread!" },
+      #h1 { text=Thread },
       #panel {id=messages, body=lists:map(fun comment/1, Comments)},
       post_form()
     ].
@@ -54,16 +53,26 @@ post_form() ->
      #label { text="Comment" }, #textarea { id=txt_comment },
      #label { text="Image"}, #upload { id=txt_image, tag=image, button_text="Submit" }].
 
-
-summary({_ThreadId, _LastUpdate, _CommentCount, [FirstComment | LastComments]}) ->
-    #panel{body=[comment(FirstComment), #p{text="..."} | lists:map(fun comment/1, LastComments)]}.
+summary({ThreadId, _LastUpdate, _CommentCount, [FirstComment | LastComments]}) ->
+    #panel {class=thread,
+	    body = [ #link{text="Reply", url=uri(ThreadId)} |
+		     case length(LastComments) of
+			 N when N < 4 ->
+			     lists:map(fun comment/1, [FirstComment | LastComments]);
+			 _ -> 
+			     [comment(FirstComment), #span{text="..."} | lists:map(fun comment/1, LastComments)]
+		     end]}.
 
 comment({Id, User, Tripcode, Body, File}) ->
-    #panel {body=[#p{ body=[#span{ text=User }, #span{ text=Tripcode }]},
-		  #p{ body=[#span{ text=now_to_id_string(Id) },
-			    #span{ text=now_to_datetime_string(Id) }]},
-		  #image{ image=File },
-		  #p{ text=Body }]}.
+    #span {class=comment,
+	   body=[#span{ class=username, text=User }, #span{ class=tripcode, text=bin_to_hex(Tripcode) },
+		 #span{ class=comment_id, text=now_to_id_string(Id) },
+		 #span{ class=comment_datetime, text=now_to_datetime_string(Id) },
+		 #image{ image=File },
+		 #span{ text=Body }]}.
+
+uri(ThreadId) ->
+    lists:append(["/view/", atom_to_list(wf:state(board)), "/", now_to_id_string(ThreadId), "/"]).
 
 now_to_datetime_string(Now) ->
     {{Y, M, D}, {H, Min, _S}} = calendar:now_to_datetime(Now),
@@ -71,13 +80,16 @@ now_to_datetime_string(Now) ->
     lists:append([Ys, ", ", month_name(M), ", ", Ds, " -- ", Hs, ":", Ms]).
 
 now_to_id_string(Now) ->
-    [A, B, C] = lists:map(fun erlang:integer_to_list/1, tuple_to_list(Now)),
-    lists:append([A, ".", B, ".", C]).
+    Res = lists:map(fun erlang:integer_to_list/1, tuple_to_list(Now)),
+    string:join(Res, ".").
     
 id_string_to_now(IdString) ->
     Split = re:split(IdString, "\\.", [{return, list}]),
     [A, B, C] = lists:map(fun (S) -> {I, []} = string:to_integer(S), I end, Split),
     {A, B, C}.
+
+bin_to_hex(Bin) ->
+    lists:flatten([io_lib:format("~2.16.0B", [X]) || X <- binary_to_list(Bin)]).
 
 month_name(Num) ->
     lists:nth(Num, ["Jan", "Feb", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]).
@@ -85,8 +97,6 @@ month_name(Num) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%% Comet related %%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Event functions %%%
 start_upload_event(image) -> ok.
@@ -94,7 +104,11 @@ start_upload_event(image) -> ok.
 collect_comment() ->
     case {wf:q(txt_comment), wf:q(txt_image)} of
 	{"", ""} -> false;
-	_ -> {wf:q(txt_user_name), wf:q(txt_tripcode), wf:q(txt_comment), wf:q(txt_image)}
+	_ -> IP = string:join(lists:map(fun erlang:integer_to_list/1, tuple_to_list(wf:peer_ip())), ","),
+	     {wf:q(txt_user_name), 
+	      string:join([IP, wf:q(txt_tripcode)], "||"), 
+	      wf:q(txt_comment), 
+	      wf:q(txt_image)}
     end.
 
 finish_upload_event(_Tag, undefined, _, _) ->
@@ -106,7 +120,7 @@ finish_upload_event(_Tag, undefined, _, _) ->
 		       false -> 
 			   Res = {Id, _, _, _} = rpc:call(?NODE, board, new_thread, [Board, Comment]),
 			   wf:send_global(Board, {thread, Res}),
-			   wf:redirect(lists:append(["/view/", atom_to_list(Board), "/", now_to_id_string(Id), "/"]));
+			   wf:redirect(uri(Id));
 		       Thread -> 
 			   Res = rpc:call(?NODE, board, reply, [Board, Thread, Comment]),
 			   wf:send_global(Thread, {message, Res})
