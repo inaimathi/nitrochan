@@ -8,7 +8,7 @@
 
 -export([create/0, clear/0, recreate/0]).
 
--record(board, {name, created, max_threads=300}).
+-record(board, {name, created, max_threads=300, max_thread_size=500, default_name="Anonymous"}).
 -record(thread, {id, board, last_update, first_comment, last_comments=[], comment_count}).
 -record(comment, {id, thread, user, tripcode, body, file}).
 
