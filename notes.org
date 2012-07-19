@@ -1,0 +1,20 @@
+
+* Dependencies
+** erlang modules
+   erlsha2
+** external programs
+   imagemagick
+
+* To Dos
+  
+** TODO should remember name and tripcode when starting a thread
+   probably SHOULDN'T keep this in session state 'cause it might cause
+   counterintuitive behavior when someone's speaking on multiple threads
+** TODO should highlight/animate new messages
+** TODO lay out messages a bit more compactly (maybe reduce preview size to 200 or so)
+** TODO do something intelligent with input newlines, rather than just dropping them
+** TODO JS-based tripcode comparison
+** TODO dynamic front page (update latest messages to threads and reorder them properly)
+  
+* Notes
+  Any other thoughts about the project go here
