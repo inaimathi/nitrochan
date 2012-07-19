@@ -45,7 +45,10 @@ handle_call({get_thread, Thread}, _From, BoardName) ->
     {reply, Res, BoardName};
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     Id = now(),
-    TripHash = erlsha2:sha256(Tripcode),
+    TripHash = case Tripcode of
+		   false -> "";
+		   _ -> erlsha2:sha256(Tripcode)
+	       end,
     Comment = #comment{id=Id, thread=Id, user=User, tripcode=TripHash, body=Body, file=File},
     Thread = #thread{id=Id, board=BoardName, last_update=Id, comment_count=1, 
 		     first_comment={Id, User, TripHash, Body, File}},
@@ -62,9 +65,6 @@ handle_call({reply, Thread, User, Tripcode, Body, File}, _From, BoardName) ->
 			 last_comments=LastComm},
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Comment), mnesia:write(Updated) end),
     {reply, summarize({comment, Comment}), BoardName}.
-
-%%Id = board:new_thread(board, {"leo", "trip", "Fuck you fuckers", ""}),
-%%board:reply(board, Id, {"FCG", "triptwo", "SHUT THE MOTHERFUCK UP DUNKASS", "f-u.jpg"}).
 
 last_n(List, NewElem, N) ->
     Res = lists:sublist([NewElem | lists:reverse(List)], N),
