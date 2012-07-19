@@ -52,14 +52,14 @@ post_form() ->
      #label { text="Comment" }, #textarea { id=txt_comment },
      #label { text="Image"}, #upload { id=txt_image, tag=image, button_text="Submit" }].
 
-summary({ThreadId, _LastUpdate, _CommentCount, [FirstComment | LastComments]}) ->
+summary({ThreadId, _LastUpdate, CommentCount, [FirstComment | LastComments]}) ->
     #panel {class=thread,
 	    body = [ #link{text="Reply", url=uri(ThreadId)} |
 		     case length(LastComments) of
 			 N when N < 4 ->
 			     lists:map(fun comment/1, [FirstComment | LastComments]);
 			 _ -> 
-			     [comment(FirstComment), #span{text="..."} | lists:map(fun comment/1, LastComments)]
+			     [comment(FirstComment), #span{text=wf:f("... snip [~p] comments...", [CommentCount - 5])} | lists:map(fun comment/1, LastComments)]
 		     end]}.
 
 comment({Id, User, Tripcode, Body, File}) ->
@@ -67,8 +67,16 @@ comment({Id, User, Tripcode, Body, File}) ->
 	   body=[#span{ class=username, text=User }, #span{ class=tripcode, text=bin_to_hex(Tripcode) },
 		 #span{ class=comment_id, text=now_to_id_string(Id) },
 		 #span{ class=comment_datetime, text=now_to_datetime_string(Id) },
-		 #image{ image=File },
-		 #span{ text=Body }]}.
+		 #br{ class=clear },
+		 case File of
+		     undefined -> "";
+		     _ -> #link{ body=#image{ image="/images/preview/" ++ File }, url="/images/big/" ++ File }
+		 end,
+		 case Body of
+		     "" -> "";
+		     _ -> #p{ text=Body }
+		 end,
+		 #br{ class=clear }]}.
 
 uri(ThreadId) ->
     lists:append(["/view/", atom_to_list(wf:state(board)), "/", now_to_id_string(ThreadId), "/"]).
@@ -101,17 +109,19 @@ month_name(Num) ->
 start_upload_event(image) -> ok.
 
 collect_tripcode() ->
-    IP = lists:map(fun erlang:integer_to_list/1, tuple_to_list(wf:peer_ip())),
-    string:join([wf:q(txt_tripcode) | IP], ".").
+    case wf:q(txt_tripcode) of
+	"" -> false;
+	Trip -> IP = lists:map(fun erlang:integer_to_list/1, tuple_to_list(wf:peer_ip())),
+		string:join([Trip | IP], ".")
+    end.
 
-collect_comment() ->
+collect_comment(LocalFileName) ->
     Body = wf:q(txt_comment), 
-    Image = wf:q(txt_image),
-    case {Body, Image} of
+    case {Body, LocalFileName} of
 	{"", undefined} -> 
 	    false;
 	_ -> 
-	    {wf:q(txt_user_name), collect_tripcode(), Body}
+	    {wf:q(txt_user_name), collect_tripcode(), Body, LocalFileName}
     end.
 
 post(Comment) ->
@@ -127,18 +137,32 @@ post(Comment) ->
     end,
     wf:set(txt_comment, "").
 
+make_tempname() ->
+    make_tempname(filename:nativename("/tmp")).
+make_tempname(TargetDir) ->
+    {A, B, C} = now(),
+    [D, E, F] = lists:map(fun integer_to_list/1, [A, B, C]),
+    Tempname = lists:append(["tmp.", D, ".", E, ".", F]),
+    filename:absname_join(TargetDir, Tempname).
+
 finish_upload_event(_Tag, undefined, _, _) ->
     %% Comment with no image (require a comment in this case)
-    case collect_comment() of
+    case collect_comment(undefined) of
 	false -> wf:flash("You need either a comment or an image");
-	{User, Trip, Body} -> post({User, Trip, Body, undefined})
+	Comment -> post(Comment)
     end;
-finish_upload_event(_Tag, FileName, LocalFileData, Node) ->
-    %% Comment with image (no other fields required)
-    FileSize = filelib:file_size(LocalFileData),
-    wf:flash(wf:f("Uploaded file: ~s (~p bytes) on node ~s.", [FileName, FileSize, Node])),
-    post(collect_comment()),
-    ok.
+finish_upload_event(_Tag, _OriginalFilename, LocalFile, _Node) ->
+    %% Comment with image (no other fields required, but the image has to be smaller than 3MB)
+    case filelib:file_size(LocalFile) < 3145728 of
+	false -> wf:flash("Your file can't be larger than 5MB"), nope;
+	_ -> Filename = filename:basename(LocalFile),
+	     Big = filename:join(["site", "static", "images", "big", Filename]),
+	     Preview = filename:join(["site", "static", "images", "preview", Filename]),
+	     file:rename(LocalFile, Big),
+	     os:cmd(lists:append(["convert ", Big, "[0] -resize 300x300\\> ", Preview])),
+	     post(collect_comment(Filename)),
+	     ok
+    end.
 
 post_loop() ->
     receive 

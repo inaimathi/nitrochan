@@ -25,7 +25,6 @@ mnesia-create:
 pull-site:
 	rsync -rv --progress nitrogen/rel/nitrogen/site/* site
 
-
 start: start-chan start-nitro
 
 start-chan:

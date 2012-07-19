@@ -1,0 +1,10 @@
+.thread { background-color: #ddf; margin-bottom: 15px; }
+.comment { display: block; background-color: #bbf; margin-bottom: 5px; }
+.comment span { display: block; float: left; margin-right: 10px; }
+.comment .username { font-weight: bold; }
+.comment .tripcode { width: 150px; overflow: hidden; }
+.comment .comment_id { font-size: x-small; }
+.comment .comment_datetime { display: block; font-size: x-small; font-style: oblique; }
+.comment img { float: left; margin: 0px 10px 10px 0px; } 
+.comment p { margin: 0px; padding: 0px; }
+.clear { clear: both; }
