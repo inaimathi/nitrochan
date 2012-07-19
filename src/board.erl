@@ -46,7 +46,7 @@ handle_call({get_thread, Thread}, _From, BoardName) ->
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     Id = now(),
     TripHash = case Tripcode of
-		   false -> "";
+		   false -> false;
 		   _ -> erlsha2:sha256(Tripcode)
 	       end,
     Comment = #comment{id=Id, thread=Id, user=User, tripcode=TripHash, body=Body, file=File},
@@ -56,7 +56,10 @@ handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) ->
     {reply, summarize({thread, Thread}), BoardName};
 handle_call({reply, Thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     Id = now(),
-    TripHash = erlsha2:sha256(Tripcode),
+    TripHash = case Tripcode of
+		   false -> false;
+		   _ -> erlsha2:sha256(Tripcode)
+	       end,
     Comment = #comment{id=Id, thread=Thread, user=User, tripcode=TripHash, body=Body, file=File},
     [Rec] = do(qlc:q([X || X <- mnesia:table(thread), X#thread.id =:= Thread])),
     LastComm = last_n(Rec#thread.last_comments, {Id, User, TripHash, Body, File}, 4),

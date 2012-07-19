@@ -64,7 +64,7 @@ summary({ThreadId, _LastUpdate, CommentCount, [FirstComment | LastComments]}) ->
 
 comment({Id, User, Tripcode, Body, File}) ->
     #span {class=comment,
-	   body=[#span{ class=username, text=User }, #span{ class=tripcode, text=bin_to_hex(Tripcode) },
+	   body=[#span{ class=username, text=User }, #span{ class=tripcode, text=trip_to_string(Tripcode) },
 		 #span{ class=comment_id, text=now_to_id_string(Id) },
 		 #span{ class=comment_datetime, text=now_to_datetime_string(Id) },
 		 #br{ class=clear },
@@ -81,6 +81,9 @@ comment({Id, User, Tripcode, Body, File}) ->
 uri(ThreadId) ->
     lists:append(["/view/", atom_to_list(wf:state(board)), "/", now_to_id_string(ThreadId), "/"]).
 
+trip_to_string(false) -> "";
+trip_to_string(Tripcode) -> bin_to_hex(Tripcode).
+    
 now_to_datetime_string(Now) ->
     {{Y, M, D}, {H, Min, _S}} = calendar:now_to_datetime(Now),
     [Ys, Ds, Hs, Ms] = lists:map(fun integer_to_list/1, [Y, D, H, Min]),
