@@ -20,13 +20,16 @@ new(BoardName) ->
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(#board{name=BoardName, created=now()}) end),
     supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName)).
 
-summarize({thread, Rec}) ->
+summarize(Rec) when is_record(Rec, thread) ->
     {Rec#thread.id, Rec#thread.last_update, Rec#thread.comment_count,
      [Rec#thread.first_comment | Rec#thread.last_comments]};
-summarize({comment, Rec}) ->
+summarize(Rec) when is_record(Rec, comment) ->
     {Rec#comment.id, Rec#comment.user, Rec#comment.tripcode, 
      Rec#comment.body, Rec#comment.file};
-summarize(Board) -> gen_server:call(Board, summarize).
+summarize({Board, ThreadId}) -> 
+    gen_server:call(Board, {summarize, ThreadId});
+summarize(Board) -> 
+    gen_server:call(Board, summarize).
 
 get_thread(Board, Thread) -> gen_server:call(Board, {get_thread, Thread}).
 
@@ -37,8 +40,11 @@ reply(Board, Thread, {User, Tripcode, Body, File}) ->
     gen_server:call(Board, {reply, Thread, User, Tripcode, Body, File}).
 
 handle_call(summarize, _From, BoardName) -> 
-    Res = do(qlc:q([summarize({thread, X}) || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
+    Res = do(qlc:q([summarize(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
     {reply, lists:sort(fun sort_threads/2, Res), BoardName};
+handle_call({summarize, ThreadId}, _From, BoardName) -> 
+    [Res] = do(qlc:q([summarize(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName, X#thread.id =:= ThreadId])),
+    {reply, Res, BoardName};
 handle_call({get_thread, Thread}, _From, BoardName) -> 
     Res = do(qlc:q([{X#comment.id, X#comment.user, X#comment.tripcode, X#comment.body, X#comment.file} 
 		    || X <- mnesia:table(comment), X#comment.thread =:= Thread])),
@@ -53,7 +59,7 @@ handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) ->
     Thread = #thread{id=Id, board=BoardName, last_update=Id, comment_count=1, 
 		     first_comment={Id, User, TripHash, Body, File}},
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Thread), mnesia:write(Comment) end),
-    {reply, summarize({thread, Thread}), BoardName};
+    {reply, summarize(Thread), BoardName};
 handle_call({reply, Thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     Id = now(),
     TripHash = case Tripcode of
@@ -67,7 +73,7 @@ handle_call({reply, Thread, User, Tripcode, Body, File}, _From, BoardName) ->
 			 comment_count=Rec#thread.comment_count + 1,
 			 last_comments=LastComm},
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Comment), mnesia:write(Updated) end),
-    {reply, summarize({comment, Comment}), BoardName}.
+    {reply, summarize(Comment), BoardName}.
 
 last_n(List, NewElem, N) ->
     Res = lists:sublist([NewElem | lists:reverse(List)], N),

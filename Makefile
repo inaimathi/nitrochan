@@ -23,7 +23,7 @@ mnesia-create:
 	erl -name erl_chan@127.0.1.1 -eval 'mnesia:create_schema([node()]).' $(erl_stop)
 
 pull-site:
-	rsync -rv --progress nitrogen/rel/nitrogen/site/* site
+	rsync -rv --progress --exclude static/images nitrogen/rel/nitrogen/site/* site
 
 start: start-chan start-nitro
 

@@ -7,14 +7,52 @@
 
 * To Dos
   
-** TODO should remember name and tripcode when starting a thread
-   probably SHOULDN'T keep this in session state 'cause it might cause
-   counterintuitive behavior when someone's speaking on multiple threads
-** TODO should highlight/animate new messages
-** TODO lay out messages a bit more compactly (maybe reduce preview size to 200 or so)
-** TODO do something intelligent with input newlines, rather than just dropping them
-** TODO JS-based tripcode comparison
-** TODO dynamic front page (update latest messages to threads and reorder them properly)
+** DONE should remember name and tripcode when starting a thread
+   CLOSED: [2012-07-23 Mon 22:03]
+   - CLOSING NOTE [2012-07-23 Mon 22:04] \\
+     -System now records your username and tripcode when you start a new thread. 
+     It may actually be better to do it on each comment post
+   - probably SHOULDN'T keep this in session state 'cause it might cause
+     counterintuitive behavior when someone's speaking on multiple threads
+   - actually, now that I think about it, session state isn't a bad idea for this.
+     the only way it could bite you is if you're simultaneously starting multiple threads
+     and want to have a different name/trip in each one
+** DONE should highlight/animate new messages
+   CLOSED: [2012-07-23 Mon 22:17]
+   - CLOSING NOTE [2012-07-23 Mon 22:18] \\
+     -New comments are now highlighted as they're posted
+   This is going to require dicking around with Nitrogen paths
+** DONE lay out messages a bit more compactly (maybe reduce preview size to 200 or so)
+   CLOSED: [2012-07-23 Mon 21:24]
+   - CLOSING NOTE [2012-07-23 Mon 21:25] \\
+     -Image preview size is now 250, max image size is 2MB (may reduce that based on traffic)
+     -Line height and padding have been blown away on individual comments
+** DONE do something intelligent with input newlines, rather than just dropping them
+   CLOSED: [2012-07-23 Mon 17:54]
+** DONE JS-based tripcode comparison
+   CLOSED: [2012-07-23 Mon 21:48]
+   - CLOSING NOTE [2012-07-23 Mon 21:49] \\
+     Mousing over a tripcode now highlights all instances of the same tripcode
+** DONE dynamic front page (update latest messages to threads and reorder them properly)
+   CLOSED: [2012-07-23 Mon 23:21]
+   - CLOSING NOTE [2012-07-23 Mon 23:21] \\
+     Done. That's going to be spawning processes and calls straight out the ass, but done and working nicely.
   
+** TODO Limit comment size in some way
+   - Preview should have a cap of ~200 characters. In fact, it should probably
+     do something like take the first non-empty parsed line of the message and preview the
+     first 200 characters of that.
+   - Full comment should have a much higher, but finite limit (more like ~5K than ~200)
+** DONE Limit field size to some semi-reasonable character count
+   CLOSED: [2012-07-24 Tue 00:18]
+   - CLOSING NOTE [2012-07-24 Tue 00:18] \\
+     Done
+   - Really don't know why I'd go lower than 100 characters or so for either tripcode or username
+   - Consider doing ~100 for username and ~250 for tripcode
+** TODO Chan-style tripcodes (no separate field, substring the username)
+   If you go this way, limit that new multi-purpose field to ~250 total
+   Not entirely sure it's a good idea, though
+
 * Notes
   Any other thoughts about the project go here
+  
