@@ -12,7 +12,7 @@
 -record(thread, {id, board, last_update, first_comment, last_comments=[], comment_count}).
 -record(comment, {id, thread, user, tripcode, body, file}).
 
--export([list/0, new/1, summarize/1, new_thread/2, get_thread/2, reply/3]).
+-export([list/0, new/1, summarize/1, default_name/1, new_thread/2, get_thread/2, reply/3]).
 
 list() -> do(qlc:q([X#board.name || X <- mnesia:table(board)])).
 
@@ -30,6 +30,8 @@ summarize({Board, ThreadId}) ->
     gen_server:call(Board, {summarize, ThreadId});
 summarize(Board) -> 
     gen_server:call(Board, summarize).
+
+default_name(Board) -> gen_server:call(Board, default_name).
 
 get_thread(Board, Thread) -> gen_server:call(Board, {get_thread, Thread}).
 
@@ -73,8 +75,12 @@ handle_call({reply, Thread, User, Tripcode, Body, File}, _From, BoardName) ->
 			 comment_count=Rec#thread.comment_count + 1,
 			 last_comments=LastComm},
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Comment), mnesia:write(Updated) end),
-    {reply, summarize(Comment), BoardName}.
+    {reply, summarize(Comment), BoardName};
+handle_call(default_name, _From, BoardName) -> 
+    [Res] = do(qlc:q([X#board.default_name || X <- mnesia:table(board), X#board.name =:= BoardName])),
+    {reply, Res, BoardName}.
 
+%%%%%%%%%%%%%%%%%%%% local utility
 last_n(List, NewElem, N) ->
     Res = lists:sublist([NewElem | lists:reverse(List)], N),
     lists:reverse(Res).

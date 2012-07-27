@@ -1,4 +1,3 @@
-%% -*- mode: nitrogen -*-
 -module (view).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -34,7 +33,7 @@ inner_body({Board}) ->
     ];
 inner_body({Board, Thread}) -> 
     wf:state(board, list_to_atom(Board)),
-    wf:state(thread, id_string_to_now(Thread)),
+    wf:state(thread, util:id_string_to_now(Thread)),
     wf:comet_global(fun () -> post_loop() end, wf:state(thread)),
     Comments = rpc:call(?NODE, board, get_thread, [wf:state(board), wf:state(thread)]),
     [ 
@@ -56,16 +55,11 @@ post_form() ->
      #label { text="Comment" }, #textarea { id=txt_comment },
      #label { text="Image"}, #upload { id=txt_image, tag=image, button_text="Submit" }].
 
-highlight() -> 
-    #effect {effect=highlight, speed=1000, options=[{color, "#00ff00"}]}.
-highlight(Target) ->
-    #effect {target=Target, effect=highlight, speed=1000, options=[{color, "#00ff00"}]}.
-    
 summary({ThreadId, LastUpdate, CommentCount, [FirstComment | LastComments]}) ->
-    IdString = now_to_thread_id(ThreadId),
+    IdString = util:now_to_thread_id(ThreadId),
     #panel {class=thread, id=IdString,
 	    body = [ #link{text="Reply", url=uri(ThreadId)}, " ::: ", 
-		     #span{ class=thread_datetime, text=now_to_datetime_string(LastUpdate) } |
+		     #span{ class=thread_datetime, text=util:now_to_datetime_string(LastUpdate) } |
 		     case length(LastComments) of
 			 N when N < 4 ->
 			     lists:map(fun comment/1, [FirstComment | LastComments]);
@@ -74,16 +68,20 @@ summary({ThreadId, LastUpdate, CommentCount, [FirstComment | LastComments]}) ->
 		     end]}.
 
 comment({Id, User, Tripcode, Body, File}) ->
-    Trip = trip_to_string(Tripcode),
+    Trip = util:trip_to_string(Tripcode),
     Class = ".comment ." ++ Trip,
     #span {class=comment,
-	   body=[#span{ class=username, text=User }, 
+	   body=[#span{ class=username, 
+			text=case User of
+				 [] -> rpc:call(?NODE, board, default_name, [wf:state(board)]);
+				 _ -> User
+			     end}, 
 		 #span{ class=[tripcode, Trip], text=Trip, 
 			actions=#event{ target=Class, 
 					type=mouseover, 
-					actions=highlight()} },
-		 #span{ class=comment_id, text=now_to_id_string(Id) },
-		 #span{ class=comment_datetime, text=now_to_datetime_string(Id) },
+					actions=util:highlight()} },
+		 #span{ class=comment_id, text=util:now_to_id_string(Id) },
+		 #span{ class=comment_datetime, text=util:now_to_datetime_string(Id) },
 		 #br{ class=clear },
 		 case File of
 		     undefined -> "";
@@ -98,33 +96,7 @@ comment({Id, User, Tripcode, Body, File}) ->
 		 #br{ class=clear }]}.
 
 uri(ThreadId) ->
-    lists:append(["/view/", atom_to_list(wf:state(board)), "/", now_to_id_string(ThreadId), "/"]).
-
-trip_to_string(false) -> "";
-trip_to_string(Tripcode) -> bin_to_hex(Tripcode).
-    
-now_to_datetime_string(Now) ->
-    {{Y, M, D}, {H, Min, _S}} = calendar:now_to_datetime(Now),
-    [Ys, Ds, Hs, Ms] = lists:map(fun integer_to_list/1, [Y, D, H, Min]),
-    lists:append([Ys, ", ", month_name(M), ", ", Ds, " -- ", Hs, ":", Ms]).
-
-now_to_thread_id(Now) -> now_to_string(Now, "thread", "").
-now_to_id_string(Now) -> now_to_string(Now, "", ".").
-now_to_string(Now, Prefix, Join) ->
-    Res = lists:map(fun erlang:integer_to_list/1, tuple_to_list(Now)),
-    Prefix ++ string:join(Res, Join).
-
-id_string_to_now(IdString) ->
-    Split = re:split(IdString, "\\.", [{return, list}]),
-    [A, B, C] = lists:map(fun (S) -> {I, []} = string:to_integer(S), I end, Split),
-    {A, B, C}.
-
-bin_to_hex(Bin) ->
-    lists:flatten([io_lib:format("~2.16.0B", [X]) || X <- binary_to_list(Bin)]).
-
-month_name(Num) ->
-    lists:nth(Num, ["Jan", "Feb", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]).
-
+    lists:append(["/view/", atom_to_list(wf:state(board)), "/", util:now_to_id_string(ThreadId), "/"]).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -167,14 +139,6 @@ post(Comment) ->
     end,
     wf:set(txt_comment, "").
 
-make_tempname() ->
-    make_tempname(filename:nativename("/tmp")).
-make_tempname(TargetDir) ->
-    {A, B, C} = now(),
-    [D, E, F] = lists:map(fun integer_to_list/1, [A, B, C]),
-    Tempname = lists:append(["tmp.", D, ".", E, ".", F]),
-    filename:absname_join(TargetDir, Tempname).
-
 finish_upload_event(_Tag, undefined, _, _) ->
     %% Comment with no image (require a comment in this case)
     case collect_comment(undefined) of
@@ -200,17 +164,17 @@ post_loop() ->
     receive 
         'INIT' -> ok; %% init is sent to the first client in the comet pool. We don't care in this case.
 	{thread, Thread} ->
-	    wf:insert_top(messages, summary(Thread));
+	    wf:insert_top(messages, summary(Thread)),
+	    wf:wire(util:highlight(".thread:first"));
 	{thread_update, ThreadId, ThreadSummary} ->
-	    wf:remove(now_to_thread_id(ThreadId)),
+	    wf:remove(util:now_to_thread_id(ThreadId)),
 	    wf:insert_top(messages, summary(ThreadSummary)),
-	    wf:insert_bottom(messages, #span {actions = highlight(".thread:first")});
+	    wf:wire(util:highlight(".thread:first"));
         {message, Comment} ->
             wf:insert_bottom(messages, comment(Comment)),
-	    wf:insert_bottom(messages, #span {actions = highlight(".comment:last")})
+	    wf:wire(util:highlight(".comment:last"))
     end,
     wf:flush(),
     post_loop().
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

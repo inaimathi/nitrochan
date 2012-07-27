@@ -52,6 +52,22 @@
 ** TODO Chan-style tripcodes (no separate field, substring the username)
    If you go this way, limit that new multi-purpose field to ~250 total
    Not entirely sure it's a good idea, though
+** DONE Have a default username set by board, and use that if the user doesn't enter one
+   CLOSED: [2012-07-27 Fri 17:10]
+   - CLOSING NOTE [2012-07-27 Fri 17:11] \\
+     Check. The default default_name is "Anonymous".
+** TODO Hook up auth and set up a moderation system
+   Mods should be able to 
+   - delete pictures, comments and threads
+   - start new boards
+   - protect threads in some pre-emptive way not sure yet, so no-op this one for now
+** TODO give behavior options to boards
+*** TODO Regular boards
+    These are the standard, sparsely moderated boards
+*** TODO Civil boards
+    Only registered users allowed here
+*** TODO Discussion boards
+    Only registered users allowed, and board threads don't go away
 
 * Notes
   Any other thoughts about the project go here
