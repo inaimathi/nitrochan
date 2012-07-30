@@ -26,7 +26,7 @@ new(BoardName) ->
 delete(Board, {image, CommentId}) -> 
     gen_server:call(Board, {delete_comment_image, CommentId});
 delete(Board, Id) -> 
-    case db:find(thread, #thread.id, Id) of
+    case find_thread(Id) of
 	false -> gen_server:call(Board, {delete_comment, Id});
 	_ -> gen_server:call(Board, {delete_thread, Id})
     end.
@@ -67,7 +67,7 @@ handle_call(default_name, _From, BoardName) ->
 %%%%%%%%%% delete operations
 handle_call({delete_thread, ThreadId}, _From, BoardName) ->
     [First | Rest] = db:do(qlc:q([X || X <- mnesia:table(comment), X#comment.thread =:= ThreadId])),
-    Thread = db:find(thread, #thread.id, ThreadId),
+    Thread = find_thread(ThreadId),
     Comm = deleted_comment(First),
     New = Thread#thread{status=deleted, first_comment=summarize(Comm), last_comments=[], comment_count=1},
     db:transaction(fun() ->
@@ -77,18 +77,17 @@ handle_call({delete_thread, ThreadId}, _From, BoardName) ->
 		   end),
     {reply, collect_files([First | Rest]), BoardName};
 handle_call({delete_comment, CommentId}, _From, BoardName) ->
-    Comment = db:find(comment, #comment.id, CommentId),
-    Thread = db:find(thread, #thread.id, Comment#comment.thread),
+    Comment = find_comm(CommentId),
+    Thread = find_thread(Comment#comment.thread),
     New = deleted_comment(Comment),
-    db:transaction(fun() -> 
-			   mnesia:write(replace_comment_cache(Thread, CommentId, summarize(New))),
-			   mnesia:write(New) 
-		   end),
+    db:atomic_insert([replace_comment_cache(Thread, CommentId, summarize(New)), New]),
     {reply, Comment#comment.file, BoardName};
 handle_call({delete_comment_image, CommentId}, _From, BoardName) ->
-    Comment = db:find(comment, #comment.id, CommentId),
+    Comment = find_comm(CommentId),
+    Thread = find_thread(Comment#comment.thread),
     OldFile = Comment#comment.file,
-    db:atomic_insert(Comment#comment{file=deleted}),
+    New = Comment#comment{file=deleted},
+    db:atomic_insert([replace_comment_cache(Thread, CommentId, summarize(New)), New]),
     {reply, OldFile, BoardName};
 
 %%%%%%%%%% non-delete write operations
@@ -104,7 +103,7 @@ handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) ->
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Thread), mnesia:write(Comment) end),
     {reply, summarize(Thread), BoardName};
 handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) -> 
-    Rec = db:find(thread, #thread.id, ThreadId),
+    Rec = find_thread(ThreadId),
     active = Rec#thread.status,
     Id = now(),
     TripHash = case Tripcode of
@@ -132,7 +131,10 @@ last_n(List, NewElem, N) ->
     lists:reverse(Res).
 
 replace_comment_cache(Thread, CommentId, NewComment) ->
-    Thread#thread{last_comments = lists:keyreplace(CommentId, 1, Thread#thread.last_comments, NewComment)}.
+    [First | Rest] = lists:keyreplace(CommentId, 1, 
+				      [Thread#thread.first_comment | Thread#thread.last_comments], 
+				      NewComment),
+    Thread#thread{first_comment=First, last_comments=Rest}.
 
 sort_threads({_, A, _, _}, {_, B, _, _}) ->
     common:now_to_seconds(A) > common:now_to_seconds(B).
@@ -151,6 +153,9 @@ create() ->
     mnesia:create_table(board, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, board)}]),
     mnesia:create_table(thread, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, thread)}]),
     mnesia:create_table(comment, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, comment)}]).
+
+find_thread(Id) -> db:find(thread, #thread.id, Id).
+find_comm(Id) -> db:find(comment, #comment.id, Id).
 
 %%%%%%%%%%%%%%%%%%%% generic actions
 start(BoardName) -> gen_server:start_link({local, BoardName}, ?MODULE, BoardName, []).
