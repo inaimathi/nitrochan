@@ -1,4 +1,3 @@
-%% -*- mode: nitrogen -*-
 -module (index).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -9,12 +8,12 @@ title() -> "Welcome to ErlChan".
 
 body() ->
     #container_12 { body=[
-        #grid_8 { alpha=true, prefix=2, suffix=2, omega=true, body=inner_body() }
-    ]}.
+			  #grid_8 { alpha=true, prefix=2, suffix=2, omega=true, body=inner_body() }
+			 ]}.
 
 inner_body() -> 
     [
-     #h1 { text="Welcome to Erl-Chan" },
+     #h1 { text="Welcome to NitroChan" },
      #panel { body=lists:map(
 		     fun (B) -> 
 			     N = atom_to_list(B),
@@ -28,6 +27,6 @@ inner_body() ->
 
 event(click) ->
     wf:replace(button, #panel { 
-        body="You clicked the button!", 
-        actions=#effect { effect=highlight }
-    }).
+		 body="You clicked the button!", 
+		 actions=#effect { effect=highlight }
+		}).

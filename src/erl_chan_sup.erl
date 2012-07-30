@@ -10,7 +10,12 @@ start_link(Args) ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, Args).
 
 init([]) ->
-    Children = lists:map(fun (B) -> child_spec(B) end, board:list()),
+    Children = 
+	try
+	    lists:map(fun (B) -> child_spec(B) end, board:list())
+	catch
+	    error:_ -> []
+	end,
     {ok, {{one_for_one, 3, 10}, 
 	  Children}}.
 

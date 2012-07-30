@@ -6,7 +6,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--export([create/0, clear/0, recreate/0]).
+-export([create/0]).
 
 -record(board, {name, created, max_threads=300, max_thread_size=500, default_name="Anonymous"}).
 -record(thread, {id, board, last_update, first_comment, last_comments=[], comment_count}).
@@ -98,12 +98,8 @@ do(Q) ->
 
 create() -> 
     mnesia:create_table(board, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, board)}]),
-    Rec = #board{name=board, created=now()},
-    {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Rec) end),
-    mnesia:create_table(thread, [{type, ordered_set}, {attributes, record_info(fields, thread)}]),
-    mnesia:create_table(comment, [{type, ordered_set}, {attributes, record_info(fields, comment)}]).
-clear() -> lists:map(fun mnesia:delete_table/1, [board, thread, comment]).
-recreate() -> clear(), create().
+    mnesia:create_table(thread, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, thread)}]),
+    mnesia:create_table(comment, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, comment)}]).
 
 %%%%%%%%%%%%%%%%%%%% generic actions
 start(BoardName) -> gen_server:start_link({local, BoardName}, ?MODULE, BoardName, []).

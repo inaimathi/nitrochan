@@ -1,7 +1,7 @@
 
 * Dependencies
 ** erlang modules
-   erlsha2
+   erlsha2 auth
 ** external programs
    imagemagick
 
@@ -68,6 +68,14 @@
     Only registered users allowed here
 *** TODO Discussion boards
     Only registered users allowed, and board threads don't go away
+
+** DONE Change the echo functions to elements
+   CLOSED: [2012-07-30 Mon 10:53]
+   - CLOSING NOTE [2012-07-30 Mon 10:54] \\
+     -Done. Instead of having echo functions, we now have element records and associated rendering functions.
+     -The more comlex elements have a from_tup/1 function which takes model output and renders the appropriate element
+** TODO Change some of the event functions into events
+** TODO Create custom form element/behavior to avoid the event finangling with the default nitrogen upload
 
 * Notes
   Any other thoughts about the project go here

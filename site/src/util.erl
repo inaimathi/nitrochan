@@ -39,3 +39,6 @@ id_string_to_now(IdString) ->
     Split = re:split(IdString, "\\.", [{return, list}]),
     [A, B, C] = lists:map(fun (S) -> {I, []} = string:to_integer(S), I end, Split),
     {A, B, C}.
+
+uri(ThreadId) ->
+    lists:append(["/view/", atom_to_list(wf:state(board)), "/", util:now_to_id_string(ThreadId), "/"]).
