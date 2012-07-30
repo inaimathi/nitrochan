@@ -50,6 +50,7 @@ reply(Board, Thread, {User, Tripcode, Body, File}) ->
     gen_server:call(Board, {reply, Thread, User, Tripcode, Body, File}).
 
 %%%%%%%%%%%%%%%%%%%% internal call handling
+%%%%%%%%%% read operations
 handle_call(summarize, _From, BoardName) -> 
     Res = db:do(qlc:q([summarize(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
     {reply, lists:sort(fun sort_threads/2, Res), BoardName};
@@ -59,36 +60,38 @@ handle_call({summarize, ThreadId}, _From, BoardName) ->
 handle_call({get_thread, Thread}, _From, BoardName) -> 
     Res = db:do(qlc:q([summarize(X) || X <- mnesia:table(comment), X#comment.thread =:= Thread])),
     {reply, Res, BoardName};
+handle_call(default_name, _From, BoardName) -> 
+    [Res] = db:do(qlc:q([X#board.default_name || X <- mnesia:table(board), X#board.name =:= BoardName])),
+    {reply, Res, BoardName};
 
+%%%%%%%%%% delete operations
 handle_call({delete_thread, ThreadId}, _From, BoardName) ->
-    %% Deletes all thread comments
-    %% Sets thread status to [deleted], sets first_comment to a deleted comment, resets last_comment and comment_count
-    %% Returns a list of filenames referenced by the deleted comments so that the caller can delete the files
-    Comments = db:do(qlc:q([X || X <- mnesia:table(comment), X#comment.thread =:= ThreadId])),
+    [First | Rest] = db:do(qlc:q([X || X <- mnesia:table(comment), X#comment.thread =:= ThreadId])),
     Thread = db:find(thread, #thread.id, ThreadId),
-    Comm = #comment{id=ThreadId, thread=ThreadId, user="DELETED", body=["DISREGARD THAT, I SUCK COCKS."], file=deleted},
+    Comm = deleted_comment(First),
     New = Thread#thread{status=deleted, first_comment=summarize(Comm), last_comments=[], comment_count=1},
     db:transaction(fun() ->
-			   lists:map(fun mnesia:delete_object/1, Comments),
+			   lists:map(fun mnesia:delete_object/1, Rest),
 			   mnesia:write(Comm),
 			   mnesia:write(New)
 		   end),
-    {reply, collect_files(Comments), BoardName};
+    {reply, collect_files([First | Rest]), BoardName};
 handle_call({delete_comment, CommentId}, _From, BoardName) ->
     Comment = db:find(comment, #comment.id, CommentId),
     Thread = db:find(thread, #thread.id, Comment#comment.thread),
-    New = Comment#comment{user="DELETED", body=["DISREGARD THAT, I SUCK COCKS."], file=deleted},
+    New = deleted_comment(Comment),
     db:transaction(fun() -> 
 			   mnesia:write(replace_comment_cache(Thread, CommentId, summarize(New))),
 			   mnesia:write(New) 
 		   end),
-    {reply, New, BoardName};
+    {reply, Comment#comment.file, BoardName};
 handle_call({delete_comment_image, CommentId}, _From, BoardName) ->
     Comment = db:find(comment, #comment.id, CommentId),
     OldFile = Comment#comment.file,
     db:atomic_insert(Comment#comment{file=deleted}),
     {reply, OldFile, BoardName};
 
+%%%%%%%%%% non-delete write operations
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     Id = now(),
     TripHash = case Tripcode of
@@ -113,13 +116,17 @@ handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) ->
     Updated = Rec#thread{last_update=Id,
 			 comment_count=Rec#thread.comment_count + 1,
 			 last_comments=LastComm},
-    {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Comment), mnesia:write(Updated) end),
-    {reply, summarize(Comment), BoardName};
-handle_call(default_name, _From, BoardName) -> 
-    [Res] = db:do(qlc:q([X#board.default_name || X <- mnesia:table(board), X#board.name =:= BoardName])),
-    {reply, Res, BoardName}.
+    db:atomic_insert([Comment, Updated]),
+    {reply, summarize(Comment), BoardName}.
 
 %%%%%%%%%%%%%%%%%%%% local utility
+deleted_comment(Comment) ->
+    NewFile = case Comment#comment.file of
+		  undefined -> undefined;
+		  _ -> deleted
+	      end,
+    Comment#comment{user="DELETED", body=["DISREGARD THAT, I SUCK COCKS."], file=NewFile}.
+
 last_n(List, NewElem, N) ->
     Res = lists:sublist([NewElem | lists:reverse(List)], N),
     lists:reverse(Res).

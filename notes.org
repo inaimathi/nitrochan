@@ -72,13 +72,24 @@
    - CLOSING NOTE [2012-07-30 Mon 10:54] \\
      -Done. Instead of having echo functions, we now have element records and associated rendering functions.
      -The more comlex elements have a from_tup/1 function which takes model output and renders the appropriate element
-** TODO Change some of the event functions into events
+** TODO Change some of the event functions into actions
 ** TODO Create custom form element/behavior to avoid the event finangling with the default nitrogen upload
 ** TODO Add description and deleted image for boards
    Fields added, still need to hook them up properly
-** TODO Add a way to delete images/comments/threads/boards
+** DONE Add a way to delete images/comments/threads/boards
+   CLOSED: [2012-07-30 Mon 16:51]
+   - CLOSING NOTE [2012-07-30 Mon 16:53] \\
+     - Threads, comments and images are now deletable (though not undeletable, and never will be)
+     - Boards can't be deleted, the point of the deletion elements is going to be limiting spam and idiocy, and I can't see an entire board getting to the point that it needs to go
 ** TODO Check whether the thread is active before displaying certain things
-** TODO Re-write the database interactions in boards.erl to use the db: package more effectively (common is already a dependency)
+   The reply button shouldn't be shown for a dead thread
+** TODO Separate summarize/1 into two functions
+   One that deals with converting records to tuples (to_tup/1)
+   One that deals with outputting summary data (summarize/1)
+** DONE Re-write the database interactions in boards.erl to use the db: package more effectively (common is already a dependency)
+   CLOSED: [2012-07-30 Mon 16:50]
+   - CLOSING NOTE [2012-07-30 Mon 16:50] \\
+     Done.
 
 * Notes
   Any other thoughts about the project go here
