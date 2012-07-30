@@ -1,7 +1,7 @@
 
 * Dependencies
 ** erlang modules
-   erlsha2 auth
+   erlsha2 common auth
 ** external programs
    imagemagick
 
@@ -58,17 +58,15 @@
      Check. The default default_name is "Anonymous".
 ** TODO Hook up auth and set up a moderation system
    Mods should be able to 
-   - delete pictures, comments and threads
-   - start new boards
-   - protect threads in some pre-emptive way not sure yet, so no-op this one for now
-** TODO give behavior options to boards
-*** TODO Regular boards
-    These are the standard, sparsely moderated boards
-*** TODO Civil boards
-    Only registered users allowed here
-*** TODO Discussion boards
-    Only registered users allowed, and board threads don't go away
-
+*** TODO delete pictures
+*** TODO delete comments
+*** TODO delete threads
+*** TODO move threads to different boards
+*** TODO start new boards
+*** TODO protect threads in some pre-emptive way. Not sure how yet, so no-op this one for now
+       - force captcha?
+       - force login?
+       - force posting delay?
 ** DONE Change the echo functions to elements
    CLOSED: [2012-07-30 Mon 10:53]
    - CLOSING NOTE [2012-07-30 Mon 10:54] \\
@@ -76,6 +74,11 @@
      -The more comlex elements have a from_tup/1 function which takes model output and renders the appropriate element
 ** TODO Change some of the event functions into events
 ** TODO Create custom form element/behavior to avoid the event finangling with the default nitrogen upload
+** TODO Add description and deleted image for boards
+   Fields added, still need to hook them up properly
+** TODO Add a way to delete images/comments/threads/boards
+** TODO Check whether the thread is active before displaying certain things
+** TODO Re-write the database interactions in boards.erl to use the db: package more effectively (common is already a dependency)
 
 * Notes
   Any other thoughts about the project go here

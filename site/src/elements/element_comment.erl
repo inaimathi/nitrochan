@@ -26,6 +26,7 @@ render_element(Rec = #comment{}) ->
 		 #br{ class=clear },
 		 case Rec#comment.file of
 		     undefined -> "";
+		     deleted -> "FILE DELETED";
 		     _ -> #link{ body=#image{ image="/images/preview/" ++ Rec#comment.file }, 
 				 url="/images/big/" ++ Rec#comment.file }
 		 end,

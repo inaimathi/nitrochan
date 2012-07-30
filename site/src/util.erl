@@ -7,8 +7,12 @@ highlight() ->
 highlight(Target) ->
     #effect {target=Target, effect=highlight, speed=1000, options=[{color, "#00ff00"}]}.
 
-trip_to_string(false) -> "";
-trip_to_string(Tripcode) -> bin_to_hex(Tripcode).
+trip_to_string(Tripcode) -> 
+    try
+	bin_to_hex(Tripcode)
+    catch
+	error:_ -> ""
+    end.
 
 now_to_datetime_string(Now) ->
     {{Y, M, D}, {H, Min, _S}} = calendar:now_to_datetime(Now),

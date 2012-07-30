@@ -36,7 +36,7 @@ inner_body({Board, Thread}) ->
     wf:comet_global(fun () -> post_loop() end, wf:state(thread)),
     Comments = rpc:call(?NODE, board, get_thread, [wf:state(board), wf:state(thread)]),
     [ 
-      #h1 { text=Thread },
+      #h1 { text=Thread }, #link{body="Back to '" ++ Board ++ "'", url="/view/" ++ Board},
       #panel {id=messages, body=lists:map(fun element_comment:from_tup/1, Comments)},
       #comment_form{}
     ].
