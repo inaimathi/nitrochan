@@ -69,7 +69,7 @@ post(Comment) ->
     Board = wf:state(board),
     case wf:state(thread) of
 	undefined -> 
-	    Res = {Id, _, _, _} = rpc:call(?NODE, board, new_thread, [Board, Comment]),
+	    Res = {Id, _, _, _, _} = rpc:call(?NODE, board, new_thread, [Board, Comment]),
 	    wf:send_global(Board, {thread, Res}),
 	    wf:redirect(util:uri(Id));
 	Thread -> 

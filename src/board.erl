@@ -47,7 +47,12 @@ reply(Board, Thread, {User, Tripcode, Body, File}) ->
 %%%%%%%%%% read operations
 handle_call(summarize, _From, BoardName) -> 
     Res = db:do(qlc:q([to_tup(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
-    {reply, lists:sort(fun sort_threads/2, Res), BoardName};
+    Threads = case Res of
+		  [] -> [];
+		  [Thread] -> [Thread];
+		  _ -> lists:sort(fun sort_threads/2, Res)
+	      end,
+    {reply, Threads, BoardName};
 handle_call({summarize, ThreadId}, _From, BoardName) -> 
     [Res] = db:do(qlc:q([to_tup(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName, X#thread.id =:= ThreadId])),
     {reply, Res, BoardName};
