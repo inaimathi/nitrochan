@@ -123,6 +123,7 @@
    - CLOSING NOTE [2012-07-30 Mon 16:50] \\
      Done.
 
+** TODO when a new message is added to a thread page, scroll down if the user is already at or near the bottom
 * Notes
   Any other thoughts about the project go here
   
