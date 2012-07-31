@@ -4,3 +4,4 @@ Mnesia*
 *dump
 *log
 *.pyc
+demos/*

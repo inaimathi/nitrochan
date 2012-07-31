@@ -31,12 +31,6 @@ delete(Board, Id) ->
 	_ -> gen_server:call(Board, {delete_thread, Id})
     end.
 
-summarize(Rec) when is_record(Rec, thread) ->
-    {Rec#thread.id, Rec#thread.last_update, Rec#thread.comment_count,
-     [Rec#thread.first_comment | Rec#thread.last_comments]};
-summarize(Rec) when is_record(Rec, comment) ->
-    {Rec#comment.id, Rec#comment.user, Rec#comment.tripcode, 
-     Rec#comment.body, Rec#comment.file};
 summarize({Board, ThreadId}) -> 
     gen_server:call(Board, {summarize, ThreadId});
 summarize(Board) -> 
@@ -52,13 +46,13 @@ reply(Board, Thread, {User, Tripcode, Body, File}) ->
 %%%%%%%%%%%%%%%%%%%% internal call handling
 %%%%%%%%%% read operations
 handle_call(summarize, _From, BoardName) -> 
-    Res = db:do(qlc:q([summarize(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
+    Res = db:do(qlc:q([to_tup(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
     {reply, lists:sort(fun sort_threads/2, Res), BoardName};
 handle_call({summarize, ThreadId}, _From, BoardName) -> 
-    [Res] = db:do(qlc:q([summarize(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName, X#thread.id =:= ThreadId])),
+    [Res] = db:do(qlc:q([to_tup(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName, X#thread.id =:= ThreadId])),
     {reply, Res, BoardName};
 handle_call({get_thread, Thread}, _From, BoardName) -> 
-    Res = db:do(qlc:q([summarize(X) || X <- mnesia:table(comment), X#comment.thread =:= Thread])),
+    Res = db:do(qlc:q([to_tup(X) || X <- mnesia:table(comment), X#comment.thread =:= Thread])),
     {reply, Res, BoardName};
 handle_call(default_name, _From, BoardName) -> 
     [Res] = db:do(qlc:q([X#board.default_name || X <- mnesia:table(board), X#board.name =:= BoardName])),
@@ -69,7 +63,7 @@ handle_call({delete_thread, ThreadId}, _From, BoardName) ->
     [First | Rest] = db:do(qlc:q([X || X <- mnesia:table(comment), X#comment.thread =:= ThreadId])),
     Thread = find_thread(ThreadId),
     Comm = deleted_comment(First),
-    New = Thread#thread{status=deleted, first_comment=summarize(Comm), last_comments=[], comment_count=1},
+    New = Thread#thread{status=deleted, first_comment=to_tup(Comm), last_comments=[], comment_count=1},
     db:transaction(fun() ->
 			   lists:map(fun mnesia:delete_object/1, Rest),
 			   mnesia:write(Comm),
@@ -80,14 +74,14 @@ handle_call({delete_comment, CommentId}, _From, BoardName) ->
     Comment = find_comm(CommentId),
     Thread = find_thread(Comment#comment.thread),
     New = deleted_comment(Comment),
-    db:atomic_insert([replace_comment_cache(Thread, CommentId, summarize(New)), New]),
+    db:atomic_insert([replace_comment_cache(Thread, CommentId, to_tup(New)), New]),
     {reply, Comment#comment.file, BoardName};
 handle_call({delete_comment_image, CommentId}, _From, BoardName) ->
     Comment = find_comm(CommentId),
     Thread = find_thread(Comment#comment.thread),
     OldFile = Comment#comment.file,
     New = Comment#comment{file=deleted},
-    db:atomic_insert([replace_comment_cache(Thread, CommentId, summarize(New)), New]),
+    db:atomic_insert([replace_comment_cache(Thread, CommentId, to_tup(New)), New]),
     {reply, OldFile, BoardName};
 
 %%%%%%%%%% non-delete write operations
@@ -101,7 +95,7 @@ handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) ->
     Thread = #thread{id=Id, board=BoardName, last_update=Id, comment_count=1, 
 		     first_comment={Id, User, TripHash, Body, File}},
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Thread), mnesia:write(Comment) end),
-    {reply, summarize(Thread), BoardName};
+    {reply, to_tup(Thread), BoardName};
 handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) -> 
     Rec = find_thread(ThreadId),
     active = Rec#thread.status,
@@ -116,7 +110,7 @@ handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) ->
 			 comment_count=Rec#thread.comment_count + 1,
 			 last_comments=LastComm},
     db:atomic_insert([Comment, Updated]),
-    {reply, summarize(Comment), BoardName}.
+    {reply, to_tup(Comment), BoardName}.
 
 %%%%%%%%%%%%%%%%%%%% local utility
 deleted_comment(Comment) ->
@@ -136,7 +130,7 @@ replace_comment_cache(Thread, CommentId, NewComment) ->
 				      NewComment),
     Thread#thread{first_comment=First, last_comments=Rest}.
 
-sort_threads({_, A, _, _}, {_, B, _, _}) ->
+sort_threads({_, _, A, _, _}, {_, _, B, _, _}) ->
     common:now_to_seconds(A) > common:now_to_seconds(B).
 
 collect_files(Comments) -> collect_files(Comments, []).
@@ -147,6 +141,13 @@ collect_files([Comment | Rest], Acc) ->
 	undefined -> collect_files(Rest, Acc);
 	Pic -> collect_files(Rest, [Pic | Acc])
     end.
+
+to_tup(Rec) when is_record(Rec, thread) ->
+    {Rec#thread.id, Rec#thread.status, Rec#thread.last_update, Rec#thread.comment_count,
+     [Rec#thread.first_comment | Rec#thread.last_comments]};
+to_tup(Rec) when is_record(Rec, comment) ->
+    {Rec#comment.id, Rec#comment.user, Rec#comment.tripcode, 
+     Rec#comment.body, Rec#comment.file}.
 
 %%%%%%%%%%%%%%%%%%%% DB-related
 create() -> 

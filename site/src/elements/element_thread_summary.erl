@@ -5,13 +5,16 @@
 
 reflect() -> record_info(fields, thread_summary).
 
-from_tup({ThreadId, LastUpdate, CommentCount, [FirstComment | LastComments]}) ->
-    #thread_summary{thread_id=ThreadId, last_update=LastUpdate, comment_count=CommentCount, 
+from_tup({ThreadId, ThreadStatus, LastUpdate, CommentCount, [FirstComment | LastComments]}) ->
+    #thread_summary{thread_id=ThreadId, status=ThreadStatus, last_update=LastUpdate, comment_count=CommentCount, 
 		    first_comment=FirstComment, last_comments=LastComments}.
 
 render_element(Rec = #thread_summary{}) ->
     #panel {class=thread, id=util:now_to_thread_id(Rec#thread_summary.thread_id),
-	    body = [ #link{text="Reply", url=util:uri(Rec#thread_summary.thread_id)}, " ::: ", 
+	    body = [ case Rec#thread_summary.status of
+			 active -> [#link{text="Reply", url=util:uri(Rec#thread_summary.thread_id)}, " ::: "];
+			 _ -> ""
+		     end,
 		     #span{ class=thread_datetime, text=util:now_to_datetime_string(Rec#thread_summary.last_update) } |
 		     case length(Rec#thread_summary.last_comments) of
 			 N when N < 4 ->
