@@ -26,7 +26,7 @@ inner_body({Board}) ->
     wf:comet_global(fun () -> post_loop() end, wf:state(board)),
     Threads =  rpc:call(?BOARD_NODE, board, summarize, [wf:state(board)]),
     [ 
-      #h1 { text=Board },
+      #crumbs{ board=Board },
       #panel {id=messages, body= lists:map(fun element_thread_summary:from_tup/1, Threads)},
       #comment_form{}
     ];
@@ -36,7 +36,8 @@ inner_body({Board, Thread}) ->
     wf:comet_global(fun () -> post_loop() end, wf:state(thread)),
     Comments = rpc:call(?BOARD_NODE, board, get_thread, [wf:state(board), wf:state(thread)]),
     [ 
-      #h1 { text=Thread }, #link{body="Back to '" ++ Board ++ "'", url="/view/" ++ Board},
+      #crumbs{ board=Board, thread=Thread },
+      #link{show_if=wf:role(admin), text="Delete Thread", postback={delete_thread, Board, Thread}},
       #panel {id=messages, body=lists:map(fun element_comment:from_tup/1, Comments)},
       #comment_form{}
     ].
@@ -46,16 +47,18 @@ inner_body({Board, Thread}) ->
 start_upload_event(image) -> ok.
 
 collect_tripcode() ->
-    case wf:q(txt_tripcode) of
-	"" -> false;
-	Trip -> IP = lists:map(fun erlang:integer_to_list/1, tuple_to_list(wf:peer_ip())),
-		string:join([Trip | IP], ".")
+    case {wf:user(), wf:q(txt_tripcode)} of
+	{undefined, ""} -> false;
+	{undefined, Trip} -> IP = lists:map(fun erlang:integer_to_list/1, tuple_to_list(wf:peer_ip())),
+			     string:join([Trip | IP], ".");
+	{User, _} when is_list(User) -> registered
     end.
 
 collect_comment(LocalFileName) ->
     Body = wf:q(txt_comment), 
-    Username = wf:q(txt_user_name),
-    Trip = wf:q(txt_tripcode),
+    erlang:display([wf:user(), wf:q(txt_user_name)]),
+    Username = wf:coalesce([wf:user(), wf:q(txt_user_name)]),
+    Trip = wf:coalesce([wf:q(txt_tripcode), ""]),
     case {Body, LocalFileName, length(Body) > 3000, length(Username) > 100, length(Trip) > 250} of
 	{"", undefined, _, _, _} -> {false, "You need either a comment or an image"};
 	{_, _, true, _, _} -> {false, "Your comment can't be longer than 3000 characters. What the fuck are you writing, a novel?"};
@@ -117,5 +120,13 @@ post_loop() ->
     end,
     wf:flush(),
     post_loop().
+
+event({delete_thread, Board, Thread}) ->
+    rpc:call(?BOARD_NODE, board, delete, [Board, Thread]);
+event(logout) -> util:logout();
+event(login) -> wf:redirect_to_login("/auth/login");
+event(register) -> wf:redirect_to_login("/auth/register");
+event(_) -> ok.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -89,8 +89,22 @@
       1. start a board
       2. moderate one or more boards
    
-*** TODO login page
-*** TODO login/logout link somewhere on existing page
+*** DONE login page
+    CLOSED: [2012-08-01 Wed 08:25]
+    - CLOSING NOTE [2012-08-01 Wed 08:25] \\
+      Login page has been created.
+*** DONE register page
+    CLOSED: [2012-08-01 Wed 08:27]
+    - CLOSING NOTE [2012-08-01 Wed 08:27] \\
+      Minimal register page done.
+      We don't even have a captcha.
+    Make it minimal; remember, registering is a bad thing. 
+    You only really need to endure it if you want to start your own board, or if you want to be added as a mod somewhere.
+    
+*** DONE login/logout link somewhere on existing page
+    CLOSED: [2012-08-01 Wed 12:00]
+    - CLOSING NOTE [2012-08-01 Wed 12:00] \\
+      Added appropriate, contextually displayed links to the comment_form
     I'm thinking set up the posting form as a toolbar, and add this to that
 *** TODO set up RSA-key login system, see how it works and what components it needs
 ** DONE Change the echo functions to elements
@@ -101,7 +115,8 @@
 ** TODO Change some of the event functions into actions
 ** TODO Create custom form element/behavior to avoid the event finangling with the default nitrogen upload
 ** TODO Add description and deleted image for boards
-   Fields added, still need to hook them up properly
+   Added and hooked up description field.
+   Added deleted image field, but haven't hooked it up properly yet
 ** DONE Add a way to delete images/comments/threads/boards
    CLOSED: [2012-07-30 Mon 16:51]
    - CLOSING NOTE [2012-07-30 Mon 16:53] \\

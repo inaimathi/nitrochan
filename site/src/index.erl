@@ -13,7 +13,7 @@ body() ->
 inner_body() -> 
     [
      #h1 { text="Welcome to NitroChan" },
-     #board_list { extra_classes=[full_page]}
+     #board_list{extra_classes=[full_page], big=true}
     ].
 
 event(click) ->

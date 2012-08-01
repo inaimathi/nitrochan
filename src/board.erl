@@ -13,15 +13,32 @@
 -record(thread, {id, board, status=active, last_update, first_comment, last_comments=[], comment_count}).
 -record(comment, {id, thread, user, tripcode, body, file}).
 
--export([list/0, new/1, delete/2, summarize/1, default_name/1, new_thread/2, get_thread/2, reply/3]).
+-export([list/0, new/1, new/2, delete/2, summarize/1, default_name/1, new_thread/2, get_thread/2, reply/3]).
 
+-define(AUTH_NODE, 'erl_chan@127.0.1.1').
 
 %%%%%%%%%%%%%%%%%%%% external API
-list() -> db:do(qlc:q([X#board.name || X <- mnesia:table(board)])).
+list() -> db:do(qlc:q([{X#board.name, X#board.description} || X <- mnesia:table(board)])).
 
-new(BoardName) ->
-    {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(#board{name=BoardName, created=now()}) end),
-    supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName)).
+exists_p(BoardName) -> 
+    case db:do(qlc:q([X#board.name || X <- mnesia:table(board), X#board.name =:= BoardName])) of
+	[] -> false;
+	_ -> true
+    end.     
+
+new(BoardName) when is_atom(BoardName) -> new(BoardName, "").
+new(BoardName, Description) when is_atom(BoardName) ->
+    case exists_p(BoardName) of
+	true -> already_exists;
+	false -> try
+		     %% in a try block because the auth node may not exist. Intentionally.
+		     rpc:call(?AUTH_NODE, groups, add_special, [BoardName, atom_to_list(BoardName) ++ " Admins"])
+		 catch
+		     error:_ -> false
+		 end,
+		 db:atomic_insert(#board{name=BoardName, description=Description, created=now()}),
+		 supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName))
+    end.
 
 delete(Board, {image, CommentId}) -> 
     gen_server:call(Board, {delete_comment_image, CommentId});
@@ -92,25 +109,19 @@ handle_call({delete_comment_image, CommentId}, _From, BoardName) ->
 %%%%%%%%%% non-delete write operations
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     Id = now(),
-    TripHash = case Tripcode of
-		   false -> false;
-		   _ -> erlsha2:sha256(Tripcode)
-	       end,
-    Comment = #comment{id=Id, thread=Id, user=User, tripcode=TripHash, body=Body, file=File},
+    Trip = triphash(Tripcode),
+    Comment = #comment{id=Id, thread=Id, user=User, tripcode=Trip, body=Body, file=File},
     Thread = #thread{id=Id, board=BoardName, last_update=Id, comment_count=1, 
-		     first_comment={Id, User, TripHash, Body, File}},
+		     first_comment={Id, User, Trip, Body, File}},
     {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Thread), mnesia:write(Comment) end),
     {reply, to_tup(Thread), BoardName};
 handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) -> 
     Rec = find_thread(ThreadId),
     active = Rec#thread.status,
     Id = now(),
-    TripHash = case Tripcode of
-		   false -> false;
-		   _ -> erlsha2:sha256(Tripcode)
-	       end,
-    Comment = #comment{id=Id, thread=ThreadId, user=User, tripcode=TripHash, body=Body, file=File},
-    LastComm = last_n(Rec#thread.last_comments, {Id, User, TripHash, Body, File}, 4),
+    Trip = triphash(Tripcode),
+    Comment = #comment{id=Id, thread=ThreadId, user=User, tripcode=Trip, body=Body, file=File},
+    LastComm = last_n(Rec#thread.last_comments, {Id, User, Trip, Body, File}, 4),
     Updated = Rec#thread{last_update=Id,
 			 comment_count=Rec#thread.comment_count + 1,
 			 last_comments=LastComm},
@@ -118,6 +129,14 @@ handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) ->
     {reply, to_tup(Comment), BoardName}.
 
 %%%%%%%%%%%%%%%%%%%% local utility
+triphash(Tripcode) ->
+    try
+	erlsha2:sha256(Tripcode)
+    catch
+	error:_ -> Tripcode
+    end.
+	
+
 deleted_comment(Comment) ->
     NewFile = case Comment#comment.file of
 		  undefined -> undefined;

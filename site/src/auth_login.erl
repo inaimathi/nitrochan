@@ -24,11 +24,11 @@ inner_body() ->
 
 authenticate(_Tag, Value) ->
     case rpc:call(?AUTH_NODE, users, auth, [Value, wf:q(txt_passphrase)]) of
-	{_Id, Username, Groups} -> 
-	    wf:session(groups, Groups),
-	    wf:user(Username),
-	    case lists:member(nitrochan_admin, Groups) of
-		true -> wf:role(admin);
+	{_Id, User, Groups} -> 
+	    wf:session(admin_groups, Groups),
+	    wf:user(User),
+	    case lists:member(admin, Groups) of
+		true -> wf:role(admin, true);
 		_ -> false
 	    end,
 	    true;

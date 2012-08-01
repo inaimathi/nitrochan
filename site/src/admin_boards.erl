@@ -19,15 +19,7 @@ body() ->
 inner_body() -> 
     [
      #h1 { text="Board Administration" },
-     #panel { body=lists:map(
-		     fun (B) -> 
-			     N = atom_to_list(B),
-			     #p { body=[ #link{ 
-					    text=N,
-					    url= "/view/" ++ N
-					   }]}
-		     end,
-		     rpc:call(?BOARD_NODE, board, list, []))}
+     #board_list { extra_classes=[full_page]}
     ].
 
 event(click) ->

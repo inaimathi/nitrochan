@@ -33,6 +33,6 @@ unique_name_p(_Tag, Value) ->
 event(register) ->
     [User, Pass] = util:q([txt_username, txt_passphrase]),
     rpc:call(?AUTH_NODE, users, register, [User, Pass]),
-    wf:session(groups, []),
+    wf:session(admin_groups, []),
     wf:user(User),
-    wf:redirect("/").
+    wf:redirect_from_login("/").

@@ -7,8 +7,12 @@ reflect() -> record_info(fields, board_list).
 
 render_element(Rec = #board_list{}) ->
     #list{class=[board_list | Rec#board_list.extra_classes],
-	  body= lists:map(fun (B) -> 
+	  body= lists:map(fun ({B, Desc}) -> 
 				  N = atom_to_list(B),
-				  #listitem{ body=[#link{ text=N, url= "/view/" ++ N }] }
+				  #listitem{ body=[ #link{ text=N, url= "/view/" ++ N },
+						    case Rec#board_list.big of
+							true -> [#br{}, #span{ text=Desc }];
+							_ -> ""
+						    end ]}
 			  end,
 			  rpc:call(?BOARD_NODE, board, list, []))}.

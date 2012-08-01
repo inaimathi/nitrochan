@@ -7,9 +7,15 @@ validators(Button, [{Elem, Validators} | Rest]) ->
     validators(Button, Rest);
 validators(_Button, []) -> ok.
 
-q(Elems) when is_list(Elems) -> values(Elems, []);
+logout() ->
+    wf:clear_roles(),
+    wf:clear_user(),
+    wf:clear_state(),
+    wf:wire("location.reload()").
+
+q(Elems) when is_list(Elems) -> q(Elems, []);
 q(Elem) when is_atom(Elem) -> wf:q(Elem).
-q([Elem | Rest], Acc) -> values(Rest, [wf:q(Elem) | Acc]);
+q([Elem | Rest], Acc) -> q(Rest, [wf:q(Elem) | Acc]);
 q([], Acc) -> lists:reverse(Acc).
 
 highlight() -> 

@@ -7,17 +7,21 @@ reflect() -> record_info(fields, comment).
 
 from_tup({Id, User, Tripcode, Body, File}) ->
     #comment{comment_id=Id, user=User, body=Body, file=File,
-	     tripcode=util:trip_to_string(Tripcode)}.
+	     tripcode=Tripcode}.
 
 render_element(Rec = #comment{}) ->
-    Class = ".comment ." ++ Rec#comment.tripcode,
+    Trip = util:trip_to_string(Rec#comment.tripcode),
+    Class = ".comment ." ++ Trip,
     #span {class=comment,
-	   body=[#span{ class=username, 
+	   body=[#span{ class= case Rec#comment.tripcode of
+				   registered -> [username, registered];
+				   _ -> username
+			       end, 
 			text=case Rec#comment.user of
 				 [] -> rpc:call(?BOARD_NODE, board, default_name, [wf:state(board)]);
 				 _ -> Rec#comment.user
 			     end}, 
-		 #span{ class=[tripcode, Rec#comment.tripcode], text=Rec#comment.tripcode, 
+		 #span{ class=[tripcode, Trip], text=Trip, 
 			actions=#event{ target=Class, 
 					type=mouseover, 
 					actions=util:highlight()} },
