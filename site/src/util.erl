@@ -2,6 +2,16 @@
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 
+validators(Button, [{Elem, Validators} | Rest]) ->
+    wf:wire(Button, Elem, #validate{ validators=Validators }),
+    validators(Button, Rest);
+validators(_Button, []) -> ok.
+
+q(Elems) -> values(Elems, []).
+q([Elem | Rest], Acc) ->
+    values(Rest, [wf:q(Elem) | Acc]);
+q([], Acc) -> lists:reverse(Acc).
+
 highlight() -> 
     #effect {effect=highlight, speed=1000, options=[{color, "#00ff00"}]}.
 highlight(Target) ->

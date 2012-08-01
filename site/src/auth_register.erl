@@ -4,36 +4,34 @@
 -include_lib("records.hrl").
 
 main() -> #template { file="./site/templates/bare.html" }.
-
-title() -> "Welcome to ErlChan".
-
-body() ->
-    #container_12 { body=[
-        #grid_8 { alpha=true, prefix=2, suffix=2, omega=true, body=inner_body() }
-    ]}.
+title() -> "Register".
+body() -> #container_12{body=[#grid_8{alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]}.
 
 inner_body() -> 
-    wf:wire(btn_register, txt_username, 
-	    #validate{ validators=[ #is_required {text="Required"},
-				    #custom { text="Incorrect user name or password.", 
-					      function=fun authenticate/2 } ]}),
-    wf:wire(btn_register, txt_password,
-	    #validate{ validators=[ #is_required {text="What, you're not even gonna guess?"}]}),
+    Val = [{txt_username, [#is_required {text="Required"},
+			   #custom {text="That username is already taken.",
+				    function=fun unique_name_p/2}]},
+	   {txt_passphrase, [#is_required {text="Yes, you need a passphrase. No, it doesn't need to be any good."},
+			     #min_length {text="Ok, maybe better than that. Try at least 8 letters.", length=8}]},
+	   {txt_confirm, [#confirm_password {text="Passwords must match", password=txt_passphrase}]}],
+    util:validators(btn_register, Val),
     [
      #h1 { text="Log In" },
-     #label { text="Username" }, #textbox { id=txt_username, next=password },
+     #label { text="Username" }, #textbox { id=txt_username, next=txt_passphrase },
      #label { text="Passphrase" }, #password { id=txt_passphrase, next=txt_confirm }, 
      #label { text="Confirm Passphrase" }, #password { id=txt_confirm, next=txt_pubkey },
-     #label { text="Public Key" }, #textarea { id=txt_pubkey }, #br{},
+     #label { text="Public Key (optional)" }, #textarea { id=txt_pubkey }, #br{},
      #button { id=btn_register, text="Register", postback=register }
     ].
 
-authenticate(_Tag, Value) ->
-    wf:flash( Value ++ " :: " ++ wf:q(txt_password) ),
-    Value == "secret".
+unique_name_p(_Tag, Value) ->
+    case rpc:call(?AUTH_NODE, users, get, [Value]) of
+	false -> true;
+	_ -> false
+    end.
 
-event(click) ->
-    wf:replace(button, #panel { 
-        body="You clicked the button!", 
-        actions=#effect { effect=highlight }
-    }).
+event(register) ->
+    [User, Pass] = util:q([txt_username, txt_passphrase]),
+    rpc:call(?AUTH_NODE, users, register, [User, Pass]),
+    wf:session(groups, []),
+    wf:user(User).
