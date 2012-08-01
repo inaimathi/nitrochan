@@ -24,7 +24,7 @@ body() ->
 inner_body({Board}) -> 
     wf:state(board, list_to_atom(Board)),
     wf:comet_global(fun () -> post_loop() end, wf:state(board)),
-    Threads =  rpc:call(?NODE, board, summarize, [wf:state(board)]),
+    Threads =  rpc:call(?BOARD_NODE, board, summarize, [wf:state(board)]),
     [ 
       #h1 { text=Board },
       #panel {id=messages, body= lists:map(fun element_thread_summary:from_tup/1, Threads)},
@@ -34,7 +34,7 @@ inner_body({Board, Thread}) ->
     wf:state(board, list_to_atom(Board)),
     wf:state(thread, util:id_string_to_now(Thread)),
     wf:comet_global(fun () -> post_loop() end, wf:state(thread)),
-    Comments = rpc:call(?NODE, board, get_thread, [wf:state(board), wf:state(thread)]),
+    Comments = rpc:call(?BOARD_NODE, board, get_thread, [wf:state(board), wf:state(thread)]),
     [ 
       #h1 { text=Thread }, #link{body="Back to '" ++ Board ++ "'", url="/view/" ++ Board},
       #panel {id=messages, body=lists:map(fun element_comment:from_tup/1, Comments)},
@@ -69,12 +69,12 @@ post(Comment) ->
     Board = wf:state(board),
     case wf:state(thread) of
 	undefined -> 
-	    Res = {Id, _, _, _, _} = rpc:call(?NODE, board, new_thread, [Board, Comment]),
+	    Res = {Id, _, _, _, _} = rpc:call(?BOARD_NODE, board, new_thread, [Board, Comment]),
 	    wf:send_global(Board, {thread, Res}),
 	    wf:redirect(util:uri(Id));
 	Thread -> 
-	    Res = rpc:call(?NODE, board, reply, [Board, Thread, Comment]),
-	    Summary = rpc:call(?NODE, board, summarize, [{Board, Thread}]),
+	    Res = rpc:call(?BOARD_NODE, board, reply, [Board, Thread, Comment]),
+	    Summary = rpc:call(?BOARD_NODE, board, summarize, [{Board, Thread}]),
 	    wf:send_global(Board, {thread_update, Thread, Summary}),
 	    wf:send_global(Thread, {message, Res})
     end,

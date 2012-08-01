@@ -14,7 +14,7 @@ render_element(Rec = #comment{}) ->
     #span {class=comment,
 	   body=[#span{ class=username, 
 			text=case Rec#comment.user of
-				 [] -> rpc:call(?NODE, board, default_name, [wf:state(board)]);
+				 [] -> rpc:call(?BOARD_NODE, board, default_name, [wf:state(board)]);
 				 _ -> Rec#comment.user
 			     end}, 
 		 #span{ class=[tripcode, Rec#comment.tripcode], text=Rec#comment.tripcode, 
