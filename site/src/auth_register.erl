@@ -34,4 +34,5 @@ event(register) ->
     [User, Pass] = util:q([txt_username, txt_passphrase]),
     rpc:call(?AUTH_NODE, users, register, [User, Pass]),
     wf:session(groups, []),
-    wf:user(User).
+    wf:user(User),
+    wf:redirect("/").

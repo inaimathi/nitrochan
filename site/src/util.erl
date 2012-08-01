@@ -7,9 +7,9 @@ validators(Button, [{Elem, Validators} | Rest]) ->
     validators(Button, Rest);
 validators(_Button, []) -> ok.
 
-q(Elems) -> values(Elems, []).
-q([Elem | Rest], Acc) ->
-    values(Rest, [wf:q(Elem) | Acc]);
+q(Elems) when is_list(Elems) -> values(Elems, []);
+q(Elem) when is_atom(Elem) -> wf:q(Elem).
+q([Elem | Rest], Acc) -> values(Rest, [wf:q(Elem) | Acc]);
 q([], Acc) -> lists:reverse(Acc).
 
 highlight() -> 

@@ -8,12 +8,13 @@ title() -> "Login".
 body() -> #container_12{body=[#grid_8 { alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]}.
 
 inner_body() -> 
-    wf:wire(btn_login, txt_username, 
-	    #validate{ validators=[ #is_required {text="You're definitely not ` `. I know that guy."},
-				    #custom { text="Incorrect user name or passphrase.", 
-					      function=fun authenticate/2 } ]}),
-    wf:wire(btn_login, txt_passphrase,
-	    #validate{ validators=[ #is_required {text="What, you're not even gonna guess?"}]}),
+    Val = [{txt_username,
+	    [#is_required {text="You're definitely not ` `. I know that guy."},
+	     #custom { text="Incorrect user name or passphrase.", 
+		       function=fun authenticate/2}]},
+	   {txt_passphrase,
+	    [ #is_required {text="What, you're not even gonna guess?"}]}],
+    util:validators(btn_login, Val),
     [
      #h1 { text="Log In" },
      #label { text="Username" }, #textbox { id=txt_username, next=txt_passphrase },
@@ -22,7 +23,6 @@ inner_body() ->
     ].
 
 authenticate(_Tag, Value) ->
-    wf:flash( Value ++ " :: " ++ wf:q(txt_passphrase) ),
     case rpc:call(?AUTH_NODE, users, auth, [Value, wf:q(txt_passphrase)]) of
 	{_Id, Username, Groups} -> 
 	    wf:session(groups, Groups),
@@ -35,8 +35,4 @@ authenticate(_Tag, Value) ->
 	_ -> false
     end.
 
-event(login) ->
-    wf:replace(button, #panel { 
-		 body="You clicked the button!", 
-		 actions=#effect { effect=highlight }
-		}).
+event(login) -> wf:redirect_from_login("/").
