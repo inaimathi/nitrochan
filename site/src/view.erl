@@ -56,7 +56,6 @@ collect_tripcode() ->
 
 collect_comment(LocalFileName) ->
     Body = wf:q(txt_comment), 
-    erlang:display([wf:user(), wf:q(txt_user_name)]),
     Username = wf:coalesce([wf:user(), wf:q(txt_user_name)]),
     Trip = wf:coalesce([wf:q(txt_tripcode), ""]),
     case {Body, LocalFileName, length(Body) > 3000, length(Username) > 100, length(Trip) > 250} of
