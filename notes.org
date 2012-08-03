@@ -58,8 +58,14 @@
      Check. The default default_name is "Anonymous".
 ** TODO Hook up auth and set up a moderation system
    Mods should be able to 
-*** TODO delete pictures
-*** TODO delete comments
+*** DONE delete pictures
+    CLOSED: [2012-08-01 Wed 18:05]
+    - CLOSING NOTE [2012-08-01 Wed 18:05] \\
+      Picture deleting now works
+*** DONE delete comments
+    CLOSED: [2012-08-01 Wed 18:05]
+    - CLOSING NOTE [2012-08-01 Wed 18:06] \\
+      Comment deleting now works
 *** TODO delete threads
 *** TODO move threads to different boards
 *** TODO start new boards

@@ -37,7 +37,7 @@ inner_body({Board, Thread}) ->
     Comments = rpc:call(?BOARD_NODE, board, get_thread, [wf:state(board), wf:state(thread)]),
     [ 
       #crumbs{ board=Board, thread=Thread },
-      #link{show_if=wf:role(admin), text="Delete Thread", postback={delete_thread, Board, Thread}},
+      #link{show_if=wf:role(admin), text="Delete Thread", postback={delete_thread, Thread}},
       #panel {id=messages, body=lists:map(fun element_comment:from_tup/1, Comments)},
       #comment_form{}
     ].
@@ -120,8 +120,12 @@ post_loop() ->
     wf:flush(),
     post_loop().
 
-event({delete_thread, Board, Thread}) ->
-    rpc:call(?BOARD_NODE, board, delete, [Board, Thread]);
+event({delete_thread, Thread}) ->
+    rpc:call(?BOARD_NODE, board, delete, [wf:state(board), Thread]);
+event({delete_comment, Comment}) ->
+    rpc:call(?BOARD_NODE, board, delete, [wf:state(board), Comment]);
+event({delete_image, Comment}) ->
+    rpc:call(?BOARD_NODE, board, delete, [wf:state(board), {image, Comment}]);
 event(logout) -> util:logout();
 event(login) -> wf:redirect_to_login("/auth/login");
 event(register) -> wf:redirect_to_login("/auth/register");
