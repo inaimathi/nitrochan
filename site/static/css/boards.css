@@ -20,8 +20,14 @@
 .comment .tripcode { width: 150px; overflow: hidden; word-break: normal; }
 .comment .comment_id { font-size: x-small; }
 .comment .comment_datetime { display: block; font-size: x-small; font-style: oblique; }
-.comment .admin_links { float: right; }
-.comment .admin_links a { font-size: small; font-weight: bolder; margin-left: 10px; }
 .comment img { float: left; margin: 5px 10px 10px 0px; } 
 .comment p { margin: 0px; padding: 0px; }
 .clear { clear: both; }
+
+.thread .admin_links a { float:right; margin-right: 15px; }
+
+.comment .admin_links { float: right; }
+.admin_links a { font-size: small; font-weight: bolder; margin-left: 10px; }
+
+.deleted { background-color: #fbb; }
+.deleted .notice { font-weight: bolder; margin-right: 10px; }

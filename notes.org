@@ -66,8 +66,15 @@
     CLOSED: [2012-08-01 Wed 18:05]
     - CLOSING NOTE [2012-08-01 Wed 18:06] \\
       Comment deleting now works
-*** TODO delete threads
+*** DONE delete threads
+    CLOSED: [2012-08-03 Fri 18:39]
+    - CLOSING NOTE [2012-08-03 Fri 18:39] \\
+      Thread deletion now works
 *** TODO move threads to different boards
+    Keep in mind that you'll need to
+    1. Move the thread
+    2. Redirect everyone that was on the old thread
+    3. Set up a temporary re-director for people that might still have stale links on screen
 *** TODO start new boards
 *** TODO protect threads in some pre-emptive way. Not sure how yet, so no-op this one for now
        - force captcha?
@@ -120,7 +127,12 @@
      -The more comlex elements have a from_tup/1 function which takes model output and renders the appropriate element
 ** TODO Change some of the event functions into actions
 ** TODO Create custom form element/behavior to avoid the event finangling with the default nitrogen upload
-** TODO Add description and deleted image for boards
+** DONE Add description and deleted image for boards
+   CLOSED: [2012-08-03 Fri 18:41]
+   - CLOSING NOTE [2012-08-03 Fri 18:42] \\
+     Not doing deleted-image field.
+     A deleted image is represented as a span with the text "DELETED FILE" in it. 
+     The actual contents/background image of said span will be determined via CSS (which we should be able to vary by board)
    Added and hooked up description field.
    Added deleted image field, but haven't hooked it up properly yet
 ** DONE Add a way to delete images/comments/threads/boards
@@ -145,6 +157,8 @@
      Done.
 
 ** TODO when a new message is added to a thread page, scroll down if the user is already at or near the bottom
+** TODO Add board-specific CSS option
+** TODO Make deletion work in realtime using the comet-pooling feature
 * Notes
   Any other thoughts about the project go here
   

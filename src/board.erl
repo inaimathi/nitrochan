@@ -8,12 +8,13 @@
 
 -export([create/0]).
 
--record(board, {name, description, created, max_threads=300, max_thread_size=500, 
-		default_name="Anonymous", deleted_image=""}).
+-record(board, {name, description, created, max_threads=300, max_thread_size=500, default_name="Anonymous"}).
 -record(thread, {id, board, status=active, last_update, first_comment, last_comments=[], comment_count}).
--record(comment, {id, thread, user, tripcode, body, file}).
+-record(comment, {id, thread, status=active, user, tripcode, body, file}).
 
--export([list/0, new/1, new/2, delete/2, summarize/1, default_name/1, new_thread/2, get_thread/2, reply/3]).
+-export([new/1, new/2, new_thread/2, reply/3]).
+-export([list/0, summarize/1, default_name/1, get_thread/2]).
+-export([delete/2, revive/2, purge/2]).
 
 -define(AUTH_NODE, 'erl_chan@127.0.1.1').
 
@@ -32,7 +33,7 @@ new(BoardName, Description) when is_atom(BoardName) ->
 	true -> already_exists;
 	false -> try
 		     %% in a try block because the auth node may not exist. Intentionally.
-		     rpc:call(?AUTH_NODE, groups, add_special, [BoardName, atom_to_list(BoardName) ++ " Admins"])
+		     rpc:call(?AUTH_NODE, groups, add_special, [BoardName, atom_to_list(BoardName) ++ " board moderators"])
 		 catch
 		     error:_ -> false
 		 end,
@@ -40,13 +41,33 @@ new(BoardName, Description) when is_atom(BoardName) ->
 		 supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName))
     end.
 
+purge(Board, {image, CommentId}) -> 
+    gen_server:call(Board, {purge_comment_image, CommentId});
+purge(Board, Id) -> 
+    case find_thread(Id) of
+	false -> gen_server:call(Board, {purge_comment, Id});
+	_ -> gen_server:call(Board, {purge_thread, Id})
+    end.
+
+%%%%%%%%%% these change deletion status, but don't remove data. They are therefore fully reversible.
 delete(Board, {image, CommentId}) -> 
-    gen_server:call(Board, {delete_comment_image, CommentId});
+    Comm = find_comm(CommentId),
+    gen_server:call(Board, {change_status, comment, CommentId, #comment.file, {deleted, Comm#comment.file}});
 delete(Board, Id) -> 
     case find_thread(Id) of
-	false -> gen_server:call(Board, {delete_comment, Id});
-	_ -> gen_server:call(Board, {delete_thread, Id})
+	false -> gen_server:call(Board, {change_status, comment, Id, #comment.status, deleted});
+	_ -> gen_server:call(Board, {change_status, thread, Id, #thread.status, deleted})
     end.
+revive(Board, {image, CommentId}) -> 
+    Comm = find_comm(CommentId),
+    {deleted, File} = Comm#comment.file,
+    gen_server:call(Board, {change_status, comment, CommentId, #comment.file, File});
+revive(Board, Id) -> 
+    case find_thread(Id) of
+	false -> gen_server:call(Board, {change_status, comment, Id, #comment.status, active});
+	_ -> gen_server:call(Board, {change_status, thread, Id, #thread.status, active})
+    end.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 summarize({Board, ThreadId}) -> 
     gen_server:call(Board, {summarize, ThreadId});
@@ -80,31 +101,45 @@ handle_call(default_name, _From, BoardName) ->
     [Res] = db:do(qlc:q([X#board.default_name || X <- mnesia:table(board), X#board.name =:= BoardName])),
     {reply, Res, BoardName};
 
-%%%%%%%%%% delete operations
-handle_call({delete_thread, ThreadId}, _From, BoardName) ->
+%%%%%%%%%% real delete operations
+handle_call({purge_thread, ThreadId}, _From, BoardName) ->
     [First | Rest] = db:do(qlc:q([X || X <- mnesia:table(comment), X#comment.thread =:= ThreadId])),
     Thread = find_thread(ThreadId),
-    Comm = deleted_comment(First),
-    New = Thread#thread{status=deleted, first_comment=to_tup(Comm), last_comments=[], comment_count=1},
+    Comm = purged_comment(First),
+    New = Thread#thread{status=purged, first_comment=to_tup(Comm), last_comments=[], comment_count=1},
     db:transaction(fun() ->
 			   lists:map(fun mnesia:delete_object/1, Rest),
 			   mnesia:write(Comm),
 			   mnesia:write(New)
 		   end),
     {reply, collect_files([First | Rest]), BoardName};
-handle_call({delete_comment, CommentId}, _From, BoardName) ->
+handle_call({purge_comment, CommentId}, _From, BoardName) ->
     Comment = find_comm(CommentId),
     Thread = find_thread(Comment#comment.thread),
-    New = deleted_comment(Comment),
+    New = purged_comment(Comment),
     db:atomic_insert([replace_comment_cache(Thread, CommentId, to_tup(New)), New]),
     {reply, Comment#comment.file, BoardName};
-handle_call({delete_comment_image, CommentId}, _From, BoardName) ->
+handle_call({purge_comment_image, CommentId}, _From, BoardName) ->
     Comment = find_comm(CommentId),
     Thread = find_thread(Comment#comment.thread),
     OldFile = Comment#comment.file,
-    New = Comment#comment{file=deleted},
+    New = Comment#comment{file=purged},
     db:atomic_insert([replace_comment_cache(Thread, CommentId, to_tup(New)), New]),
     {reply, OldFile, BoardName};
+
+%%%%%%%%%% hide operation
+handle_call({change_status, thread, Id, Index, NewValue}, _From, BoardName) ->
+    Rec = find_thread(Id),
+    New = setelement(Index, Rec, NewValue),
+    db:atomic_insert(New),
+    {reply, to_tup(New), BoardName};
+handle_call({change_status, comment, Id, Index, NewValue}, _From, BoardName) ->
+    Rec = find_comm(Id),
+    Thread = find_thread(Rec#comment.thread),
+    New = setelement(Index, Rec, NewValue),
+    NewTup = to_tup(New),
+    db:atomic_insert([replace_comment_cache(Thread, Id, NewTup), New]),
+    {reply, NewTup, BoardName};
 
 %%%%%%%%%% non-delete write operations
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
@@ -112,8 +147,8 @@ handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) ->
     Trip = triphash(Tripcode),
     Comment = #comment{id=Id, thread=Id, user=User, tripcode=Trip, body=Body, file=File},
     Thread = #thread{id=Id, board=BoardName, last_update=Id, comment_count=1, 
-		     first_comment={Id, User, Trip, Body, File}},
-    {atomic, ok} = mnesia:transaction(fun () -> mnesia:write(Thread), mnesia:write(Comment) end),
+		     first_comment=to_tup(Comment)},
+    db:atomic_insert([Thread, Comment]),
     {reply, to_tup(Thread), BoardName};
 handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) -> 
     Rec = find_thread(ThreadId),
@@ -121,7 +156,7 @@ handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) ->
     Id = now(),
     Trip = triphash(Tripcode),
     Comment = #comment{id=Id, thread=ThreadId, user=User, tripcode=Trip, body=Body, file=File},
-    LastComm = last_n(Rec#thread.last_comments, {Id, User, Trip, Body, File}, 4),
+    LastComm = last_n(Rec#thread.last_comments, to_tup(Comment), 4),
     Updated = Rec#thread{last_update=Id,
 			 comment_count=Rec#thread.comment_count + 1,
 			 last_comments=LastComm},
@@ -135,12 +170,11 @@ triphash(Tripcode) ->
     catch
 	error:_ -> Tripcode
     end.
-	
 
-deleted_comment(Comment) ->
+purged_comment(Comment) ->
     NewFile = case Comment#comment.file of
 		  undefined -> undefined;
-		  _ -> deleted
+		  _ -> purged
 	      end,
     Comment#comment{user="DELETED", body=["DISREGARD THAT, I SUCK COCKS."], file=NewFile}.
 
@@ -170,7 +204,7 @@ to_tup(Rec) when is_record(Rec, thread) ->
     {Rec#thread.id, Rec#thread.status, Rec#thread.last_update, Rec#thread.comment_count,
      [Rec#thread.first_comment | Rec#thread.last_comments]};
 to_tup(Rec) when is_record(Rec, comment) ->
-    {Rec#comment.id, Rec#comment.user, Rec#comment.tripcode, 
+    {Rec#comment.id, Rec#comment.status, Rec#comment.user, Rec#comment.tripcode, 
      Rec#comment.body, Rec#comment.file}.
 
 %%%%%%%%%%%%%%%%%%%% DB-related

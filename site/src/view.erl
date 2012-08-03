@@ -126,6 +126,12 @@ event({delete_comment, Comment}) ->
     rpc:call(?BOARD_NODE, board, delete, [wf:state(board), Comment]);
 event({delete_image, Comment}) ->
     rpc:call(?BOARD_NODE, board, delete, [wf:state(board), {image, Comment}]);
+event({revive_thread, Thread}) ->
+    rpc:call(?BOARD_NODE, board, revive, [wf:state(board), Thread]);
+event({revive_comment, Comment}) ->
+    rpc:call(?BOARD_NODE, board, revive, [wf:state(board), Comment]);
+event({revive_image, Comment}) ->
+    rpc:call(?BOARD_NODE, board, revive, [wf:state(board), {image, Comment}]);
 event(logout) -> util:logout();
 event(login) -> wf:redirect_to_login("/auth/login");
 event(register) -> wf:redirect_to_login("/auth/register");
