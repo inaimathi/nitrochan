@@ -139,7 +139,7 @@ handle_call({change_status, comment, Id, Index, NewValue}, _From, BoardName) ->
     New = setelement(Index, Rec, NewValue),
     NewTup = to_tup(New),
     db:atomic_insert([replace_comment_cache(Thread, Id, NewTup), New]),
-    {reply, NewTup, BoardName};
+    {reply, {Rec#comment.thread, NewTup}, BoardName};
 
 %%%%%%%%%% non-delete write operations
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
@@ -211,7 +211,8 @@ to_tup(Rec) when is_record(Rec, comment) ->
 create() -> 
     mnesia:create_table(board, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, board)}]),
     mnesia:create_table(thread, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, thread)}]),
-    mnesia:create_table(comment, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, comment)}]).
+    mnesia:create_table(comment, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, comment)}]),
+    new(admin).
 
 find_thread(Id) -> db:find(thread, #thread.id, Id).
 find_comm(Id) -> db:find(comment, #comment.id, Id).

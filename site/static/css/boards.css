@@ -24,9 +24,10 @@
 .comment p { margin: 0px; padding: 0px; }
 .clear { clear: both; }
 
-.thread .admin_links a { float:right; margin-right: 15px; }
+.thread .admin_links a { float:right; margin-right: 10px; }
 
 .comment .admin_links { float: right; }
+.comment .admin_links a { float: none; }
 .admin_links a { font-size: small; font-weight: bolder; margin-left: 10px; }
 
 .deleted { background-color: #fbb; }

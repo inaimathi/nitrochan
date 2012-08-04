@@ -156,9 +156,15 @@
    - CLOSING NOTE [2012-07-30 Mon 16:50] \\
      Done.
 
-** TODO when a new message is added to a thread page, scroll down if the user is already at or near the bottom
+** DONE when a new message is added to a thread page, scroll down if the user is already at or near the bottom
+   CLOSED: [2012-08-04 Sat 01:35]
+   - CLOSING NOTE [2012-08-04 Sat 01:36] \\
+     If a user is within 1000px (may need to adjust the number) of the bottom, the view scrolls down to show the latest comment
 ** TODO Add board-specific CSS option
-** TODO Make deletion work in realtime using the comet-pooling feature
+** DONE Make deletion work in realtime using the comet-pooling feature
+   CLOSED: [2012-08-04 Sat 01:18]
+   - CLOSING NOTE [2012-08-04 Sat 01:18] \\
+     Deletions and restores now send messages to appropriate comet pools
 * Notes
   Any other thoughts about the project go here
   

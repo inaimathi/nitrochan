@@ -9,8 +9,8 @@ from_tup({Id, Status, User, Tripcode, Body, File}) ->
     #comment{comment_id=Id, status=Status, user=User, body=Body, file=File, tripcode=Tripcode}.
 
 render_element(Rec = #comment{status=deleted}) ->
-    Id = util:now_to_id_string(Rec#comment.comment_id),
-    #span {class=[comment, "comment" ++ Id, deleted],
+    Id = util:now_to_css_id(Rec#comment.comment_id),
+    #span {class=[comment, deleted], id=Id,
 	   body=[#span{ class=notice, text="Deleted" },
 		 #span{ class=comment_id, text=Id },
 		 #span{ class=comment_datetime, text=util:now_to_datetime_string(Rec#comment.comment_id) },
@@ -21,8 +21,8 @@ render_element(Rec = #comment{status=deleted}) ->
 render_element(Rec = #comment{}) ->
     Trip = util:trip_to_string(Rec#comment.tripcode),
     Class = ".comment ." ++ Trip,
-    Id = util:now_to_id_string(Rec#comment.comment_id),
-    #span {class=[comment, "comment" ++ Id],
+    Id = util:now_to_css_id(Rec#comment.comment_id),
+    #span {class=comment, id=Id,
 	   body=[render_user(Rec#comment.tripcode, Rec#comment.user), 
 		 #span{ class=[tripcode, Trip], text=Trip, 
 			actions=#event{ target=Class, 

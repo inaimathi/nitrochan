@@ -37,6 +37,7 @@ now_to_datetime_string(Now) ->
 
 now_to_thread_id(Now) -> now_to_string(Now, "thread", "").
 now_to_id_string(Now) -> now_to_string(Now, "", ".").
+now_to_css_id(Now) -> now_to_string(Now, "", "").
 now_to_string(Now, Prefix, Join) ->
     Res = lists:map(fun erlang:integer_to_list/1, tuple_to_list(Now)),
     Prefix ++ string:join(Res, Join).

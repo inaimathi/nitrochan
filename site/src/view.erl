@@ -115,23 +115,44 @@ post_loop() ->
 	    wf:wire(util:highlight(".thread:first"));
         {message, Comment} ->
             wf:insert_bottom(messages, element_comment:from_tup(Comment)),
-	    wf:wire(util:highlight(".comment:last"))
+	    wf:wire(util:highlight(".comment:last")),
+	    %% scroll to the bottom if the viewer is near it
+	    %%%%% (make it easy for people to follow the latest developments without
+	    %%%%%  fucking over the ones still getting up to speed)
+	    wf:wire("if (1000 > ($('body').height() - $('body').scrollTop())) $('body').scrollTop($('body').height());");
+	{replace_thread, ElemId, Elem} ->
+	    wf:replace(".wfid_" ++ util:now_to_thread_id(ElemId), 
+		       element_thread_summary:from_tup(Elem));
+	{replace_comment, ElemId, Elem} ->
+	    wf:replace(".wfid_" ++ util:now_to_css_id(ElemId), 
+		       element_comment:from_tup(Elem))
     end,
     wf:flush(),
     post_loop().
 
-event({delete_thread, Thread}) ->
-    rpc:call(?BOARD_NODE, board, delete, [wf:state(board), Thread]);
-event({delete_comment, Comment}) ->
-    rpc:call(?BOARD_NODE, board, delete, [wf:state(board), Comment]);
-event({delete_image, Comment}) ->
-    rpc:call(?BOARD_NODE, board, delete, [wf:state(board), {image, Comment}]);
-event({revive_thread, Thread}) ->
-    rpc:call(?BOARD_NODE, board, revive, [wf:state(board), Thread]);
-event({revive_comment, Comment}) ->
-    rpc:call(?BOARD_NODE, board, revive, [wf:state(board), Comment]);
-event({revive_image, Comment}) ->
-    rpc:call(?BOARD_NODE, board, revive, [wf:state(board), {image, Comment}]);
+state_change(Fn, Target) ->
+    Id = case Target of
+	     {image, CommentId} -> CommentId;
+	     _ -> Target
+	 end,
+    case rpc:call(?BOARD_NODE, board, Fn, [wf:state(board), Target]) of
+	{Thread, New} -> wf:send_global(wf:state(board), {replace_comment, Id, New}),
+			 wf:send_global(Thread, {replace_comment, Id, New});
+	New -> wf:send_global(wf:state(board), {replace_thread, Id, New})
+    end.
+
+event({delete_thread, ThreadId}) ->
+    state_change(delete, ThreadId);
+event({delete_comment, CommentId}) ->
+    state_change(delete, CommentId);
+event({delete_image, CommentId}) ->
+    state_change(delete, {image, CommentId});
+event({revive_thread, ThreadId}) ->
+    state_change(revive, ThreadId);
+event({revive_comment, CommentId}) ->
+    state_change(revive, CommentId);
+event({revive_image, CommentId}) ->
+    state_change(revive, {image, CommentId});
 event(logout) -> util:logout();
 event(login) -> wf:redirect_to_login("/auth/login");
 event(register) -> wf:redirect_to_login("/auth/register");
