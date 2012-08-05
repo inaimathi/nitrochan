@@ -13,13 +13,20 @@
 -record(comment, {id, thread, status=active, user, tripcode, body, file}).
 
 -export([new/1, new/2, new_thread/2, reply/3]).
--export([list/0, summarize/1, default_name/1, get_thread/2]).
+-export([list/0, status/1, summarize/1, default_name/1, get_thread/2]).
 -export([delete/2, revive/2, purge/2]).
 
 -define(AUTH_NODE, 'erl_chan@127.0.1.1').
 
 %%%%%%%%%%%%%%%%%%%% external API
 list() -> db:do(qlc:q([{X#board.name, X#board.description} || X <- mnesia:table(board)])).
+
+status(Id) ->
+    case find_thread(Id) of
+	false -> Comm = find_comm(Id),
+		 Comm#comment.status;
+	Thread -> Thread#thread.status
+    end.
 
 exists_p(BoardName) -> 
     case db:do(qlc:q([X#board.name || X <- mnesia:table(board), X#board.name =:= BoardName])) of

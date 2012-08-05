@@ -35,9 +35,10 @@ inner_body({Board, Thread}) ->
     wf:state(thread, util:id_string_to_now(Thread)),
     wf:comet_global(fun () -> post_loop() end, wf:state(thread)),
     Comments = rpc:call(?BOARD_NODE, board, get_thread, [wf:state(board), wf:state(thread)]),
+    ThreadStat = rpc:call(?BOARD_NODE, board, status, [wf:state(thread)]),
     [ 
       #crumbs{ board=Board, thread=Thread },
-      #link{show_if=wf:role(admin), text="Delete Thread", postback={delete_thread, Thread}},
+      #thread_moderation{thread_id=wf:state(thread), status=ThreadStat},
       #panel {id=messages, body=lists:map(fun element_comment:from_tup/1, Comments)},
       #comment_form{}
     ].
@@ -141,18 +142,6 @@ state_change(Fn, Target) ->
 	New -> wf:send_global(wf:state(board), {replace_thread, Id, New})
     end.
 
-event({delete_thread, ThreadId}) ->
-    state_change(delete, ThreadId);
-event({delete_comment, CommentId}) ->
-    state_change(delete, CommentId);
-event({delete_image, CommentId}) ->
-    state_change(delete, {image, CommentId});
-event({revive_thread, ThreadId}) ->
-    state_change(revive, ThreadId);
-event({revive_comment, CommentId}) ->
-    state_change(revive, CommentId);
-event({revive_image, CommentId}) ->
-    state_change(revive, {image, CommentId});
 event(logout) -> util:logout();
 event(login) -> wf:redirect_to_login("/auth/login");
 event(register) -> wf:redirect_to_login("/auth/register");
