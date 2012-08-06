@@ -8,12 +8,7 @@ reflect() -> record_info(fields, comment_form).
 render_element(_Record = #comment_form{}) ->
     [#panel{id=comment_form,
 	    body=[#flash{},
-		  #panel{show_if=(wf:user() == undefined), class=auth_panel,
-			 body=[#link{text="Login", postback=login},
-			       #link{text="Register", postback=register}]},
-		  #panel{show_if=(wf:user() /= undefined), class=logged_in_panel,
-			 body=[#span{class=username, text=wf:user()},
-			       #link{text="Log Out", postback=logout}]},
+		  #login_bar{},
 		  #panel{show_if=(wf:user() == undefined),
 			 body=[#label{text="Username"}, 
 			       #textbox{id=txt_user_name, next=tripcode, 

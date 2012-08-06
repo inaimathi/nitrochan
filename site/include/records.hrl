@@ -7,6 +7,7 @@
 
 -record(crumbs, {?ELEMENT_BASE(element_crumbs), board, thread}).
 -record(thread_moderation, {?ELEMENT_BASE(element_thread_moderation), thread_id, status}).
+-record(login_bar, {?ELEMENT_BASE(element_login_bar)}).
 
 %%% custom actions
 

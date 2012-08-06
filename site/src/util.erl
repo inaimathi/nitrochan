@@ -21,12 +21,6 @@ now_to_datetime_string(Now) ->
 month_name(Num) ->
     lists:nth(Num, ["Jan", "Feb", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]).
 
-logout() ->
-    wf:clear_roles(),
-    wf:clear_user(),
-    wf:clear_state(),
-    wf:wire("location.reload()").
-
 temp_id() -> wf:temp_id().
 temp_id(Num) -> lists:map(fun (_I) -> wf:temp_id() end, lists:seq(1, Num)).
 
@@ -77,9 +71,10 @@ id_string_to_now(IdString) ->
     [A, B, C] = lists:map(fun (S) -> {I, []} = string:to_integer(S), I end, Split),
     {A, B, C}.
 
-uri({Board, ThreadId}) when is_atom(Board) ->
-    uri({atom_to_list(Board), ThreadId});
-uri({Board, ThreadId}) ->
-    lists:append(["/view/", Board, "/", util:now_to_id_string(ThreadId), "/"]);
-uri(ThreadId) ->
-    uri({wf:state(board), ThreadId}).
+uri({board, Board}) when is_list(Board) ->
+    lists:append(["/board/", Board, "/"]);
+uri({board, Board}) ->
+    uri({board, atom_to_list(Board)});
+uri({thread, ThreadId}) ->
+    lists:append(["/thread/", util:now_to_id_string(ThreadId), "/"]).
+

@@ -17,7 +17,7 @@ render_element(#thread_summary{status=deleted, thread_id=Id, last_update=Latest}
 		   ]};
 render_element(#thread_summary{thread_id=Id, last_update=Latest, status=Status, first_comment=First, last_comments=Last, comment_count=Count}) ->
     #panel {class=thread, id=util:now_to_thread_id(Id),
-	    body = [ #link{text="Reply", url=util:uri(Id)}, " ::: ",
+	    body = [ #link{text="Reply", url=util:uri({thread, Id})}, " ::: ",
 		     #span{ class=thread_datetime, text=util:now_to_datetime_string(Latest) },
 		     #thread_moderation{thread_id=Id, status=Status}|
 		     case Count of

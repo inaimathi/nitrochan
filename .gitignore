@@ -5,3 +5,4 @@ Mnesia*
 *log
 *.pyc
 demos/*
+deps/*

@@ -1,3 +1,4 @@
+
 -module (element_crumbs).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -12,4 +13,4 @@ render_element(Rec = #crumbs{}) ->
 
 links(Board, undefined) -> Board;
 links(Board, Thread) ->
-    [#link {text=Board, url="/view/" ++ Board}, " / ", Thread].
+    [#link {text=Board, url=util:uri({board, Board})}, " / ", Thread].

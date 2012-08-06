@@ -10,6 +10,10 @@ reflect() -> record_info(fields, comment).
 
 from_tup({Id, Status, User, Tripcode, Body, File}) ->
     #comment{comment_id=Id, status=Status, user=User, body=Body, file=File, tripcode=Tripcode}.
+from_tup(DefaultUser, {Id, Status, User, Tripcode, Body, File}) ->
+    #comment{comment_id=Id, status=Status, body=Body, file=File, tripcode=Tripcode,
+	     user=wf:coalesce([User, DefaultUser])}.
+
 
 render_element(#comment{status=deleted, comment_id=Id}) ->
     RevId = util:temp_id(),

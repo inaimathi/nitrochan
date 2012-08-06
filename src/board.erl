@@ -13,7 +13,7 @@
 -record(comment, {id, thread, status=active, user, tripcode, body, file}).
 
 -export([new/1, new/2, new_thread/2, reply/3]).
--export([list/0, status/1, summarize/1, default_name/1, get_thread/1]).
+-export([list/0, thread_meta/1, summarize/1, default_name/1, get_thread/1]).
 -export([move/2, delete/2, revive/2, purge/2]).
 
 -define(AUTH_NODE, 'erl_chan@127.0.1.1').
@@ -21,12 +21,9 @@
 %%%%%%%%%%%%%%%%%%%% external API
 list() -> db:do(qlc:q([{X#board.name, X#board.description} || X <- mnesia:table(board)])).
 
-status(Id) ->
-    case find_thread(Id) of
-	false -> Comm = find_comm(Id),
-		 Comm#comment.status;
-	Thread -> Thread#thread.status
-    end.
+thread_meta(Id) ->
+    #thread{board=Board, status=Stat, last_update=Last, comment_count=Count} = find_thread(Id),
+    { Board, Stat, default_name(Board), Last, Count }.
 
 exists_p(BoardName) -> 
     case db:do(qlc:q([X#board.name || X <- mnesia:table(board), X#board.name =:= BoardName])) of
@@ -85,7 +82,9 @@ summarize({Board, ThreadId}) ->
 summarize(Board) -> 
     gen_server:call(Board, summarize).
 
-default_name(Board) -> gen_server:call(Board, default_name).
+default_name(Board) -> 
+    [Res] = db:do(qlc:q([X#board.default_name || X <- mnesia:table(board), X#board.name =:= Board])),
+    Res.
 get_thread(Thread) -> 
     #thread{ board=Board } = find_thread(Thread),
     gen_server:call(Board, {get_thread, Thread}).
@@ -109,9 +108,6 @@ handle_call({summarize, ThreadId}, _From, BoardName) ->
     {reply, Res, BoardName};
 handle_call({get_thread, Thread}, _From, BoardName) -> 
     Res = db:do(qlc:q([to_tup(X) || X <- mnesia:table(comment), X#comment.thread =:= Thread])),
-    {reply, Res, BoardName};
-handle_call(default_name, _From, BoardName) -> 
-    [Res] = db:do(qlc:q([X#board.default_name || X <- mnesia:table(board), X#board.name =:= BoardName])),
     {reply, Res, BoardName};
 
 %%%%%%%%%% real delete operations
@@ -160,10 +156,11 @@ handle_call({move_thread, ThreadRec, NewBoard}, _From, BoardName) ->
     db:atomic_insert(New),
     {reply, to_tup(New), BoardName};
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
-    Id = now(),
+    ThreadId = now(),
+    CommId = now(),
     Trip = triphash(Tripcode),
-    Comment = #comment{id=Id, thread=Id, user=User, tripcode=Trip, body=Body, file=File},
-    Thread = #thread{id=Id, board=BoardName, last_update=Id, comment_count=1, 
+    Comment = #comment{id=CommId, thread=ThreadId, user=User, tripcode=Trip, body=Body, file=File},
+    Thread = #thread{id=ThreadId, board=BoardName, last_update=ThreadId, comment_count=1, 
 		     first_comment=to_tup(Comment)},
     db:atomic_insert([Thread, Comment]),
     {reply, to_tup(Thread), BoardName};
