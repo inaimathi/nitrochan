@@ -11,9 +11,11 @@ reflect() -> record_info(fields, thread_moderation).
 render_element(#thread_moderation{thread_id=Thread, status=active}) ->
     [DelId, MovId] = util:temp_id(2),
     local(DelId, click, {delete_thread, Thread}),
-    local(MovId, click, {move_thread, Thread}),
+    local(MovId, change, {move_thread, Thread, MovId}),
     render_block([#link{id=DelId, text="Delete Thread"},
-		  #link{id=MovId, text="Move Thread"}]);
+		  #dropdown{id=MovId, 
+			    options=lists:map(fun({O, _Desc}) -> #option { text=O, value=O } end,
+					      [{"Move Thread", none} | rpc:call(?BOARD_NODE, board, list, [])])}]);
 render_element(#thread_moderation{thread_id=Thread, status=deleted}) ->
     RevId = util:temp_id(),
     local(RevId, click, {revive_thread, Thread}),
@@ -28,11 +30,14 @@ event({delete_thread, ThreadId}) ->
     util:state_change(delete, ThreadId);
 event({revive_thread, ThreadId}) ->
     util:state_change(revive, ThreadId);
-event({delete_comment, CommentId}) ->
-    util:state_change(delete, CommentId);
-event({delete_image, CommentId}) ->
-    util:state_change(delete, {image, CommentId});
-event({revive_comment, CommentId}) ->
-    util:state_change(revive, CommentId);
-event({revive_image, CommentId}) ->
-    util:state_change(revive, {image, CommentId}).
+event({move_thread, Thread, "Move Thread"}) ->
+    haha_NO;
+event({move_thread, Thread, Field}) ->
+    BoardStr = wf:q(Field),
+    Board = list_to_atom(BoardStr),
+    %% wf:send_global(wf:state(board), 
+    %% 		   {replace_thread, Thread, Elem}),
+    New = rpc:call(?BOARD_NODE, board, move, [Thread, Board]),
+    wf:send_global(wf:state(board), {replace_thread, Thread, {moved, BoardStr}}),
+    wf:send_global(Thread, {thread_moved, BoardStr}),
+    erlang:display({moving, Thread, to, Board}).

@@ -75,6 +75,9 @@
     1. Move the thread
     2. Redirect everyone that was on the old thread
     3. Set up a temporary re-director for people that might still have stale links on screen
+    Another way to solve this would be to remove the board/thread hierarchy.
+    That way moving a thread over has no actual effect on any links, but the breadcrumb trail
+    becomes a personal thing; we should notify people in threads that they've been transplanted.
 *** TODO start new boards
 *** TODO protect threads in some pre-emptive way. Not sure how yet, so no-op this one for now
        - force captcha?

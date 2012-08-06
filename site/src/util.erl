@@ -28,7 +28,7 @@ logout() ->
     wf:wire("location.reload()").
 
 temp_id() -> wf:temp_id().
-temp_id(Num) -> lists:map(fun (I) -> wf:temp_id() end, lists:seq(1, Num)).
+temp_id(Num) -> lists:map(fun (_I) -> wf:temp_id() end, lists:seq(1, Num)).
 
 bin_to_hex(Bin) ->
     lists:flatten([io_lib:format("~2.16.0B", [X]) || X <- binary_to_list(Bin)]).
@@ -77,5 +77,9 @@ id_string_to_now(IdString) ->
     [A, B, C] = lists:map(fun (S) -> {I, []} = string:to_integer(S), I end, Split),
     {A, B, C}.
 
+uri({Board, ThreadId}) when is_atom(Board) ->
+    uri({atom_to_list(Board), ThreadId});
+uri({Board, ThreadId}) ->
+    lists:append(["/view/", Board, "/", util:now_to_id_string(ThreadId), "/"]);
 uri(ThreadId) ->
-    lists:append(["/view/", atom_to_list(wf:state(board)), "/", util:now_to_id_string(ThreadId), "/"]).
+    uri({wf:state(board), ThreadId}).

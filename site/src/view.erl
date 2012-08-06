@@ -34,7 +34,7 @@ inner_body({Board, Thread}) ->
     wf:state(board, list_to_atom(Board)),
     wf:state(thread, util:id_string_to_now(Thread)),
     wf:comet_global(fun () -> post_loop() end, wf:state(thread)),
-    Comments = rpc:call(?BOARD_NODE, board, get_thread, [wf:state(board), wf:state(thread)]),
+    Comments = rpc:call(?BOARD_NODE, board, get_thread, [wf:state(thread)]),
     ThreadStat = rpc:call(?BOARD_NODE, board, status, [wf:state(thread)]),
     [ 
       #crumbs{ board=Board, thread=Thread },
@@ -114,6 +114,10 @@ post_loop() ->
 	    wf:remove(util:now_to_thread_id(ThreadId)),
 	    wf:insert_top(messages, element_thread_summary:from_tup(ThreadSummary)),
 	    wf:wire(util:highlight(".thread:first"));
+	{thread_moved, NewBoard} ->
+	    wf:replace(breadcrumb_trail, #crumbs{ board=NewBoard, thread=wf:state(thread) }),
+	    wf:wire(util:highlight(breadcrumb_trail)),
+	    wf:flash(["This thread has moved to ", #link{text=NewBoard, url="/view/" ++ NewBoard}]);
         {message, Comment} ->
             wf:insert_bottom(messages, element_comment:from_tup(Comment)),
 	    wf:wire(util:highlight(".comment:last")),
@@ -121,6 +125,15 @@ post_loop() ->
 	    %%%%% (make it easy for people to follow the latest developments without
 	    %%%%%  fucking over the ones still getting up to speed)
 	    wf:wire("if (1000 > ($('body').height() - $('body').scrollTop())) $('body').scrollTop($('body').height());");
+	{replace_thread, ElemId, {moved, BoardStr}} ->
+	    CssId = util:now_to_thread_id(ElemId),
+	    wf:replace(".wfid_" ++ CssId, 
+		       #panel { class=[thread, moved], id=CssId,
+			        body = [ #span{ class=notice, 
+						body=[#link{text=util:now_to_id_string(ElemId), 
+							    url=util:uri({BoardStr, ElemId})},
+						      " moved to ", 
+						      #link{text=BoardStr, url="/view/" ++ BoardStr}]}]});
 	{replace_thread, ElemId, Elem} ->
 	    wf:replace(".wfid_" ++ util:now_to_thread_id(ElemId), 
 		       element_thread_summary:from_tup(Elem));

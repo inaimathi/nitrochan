@@ -13,8 +13,8 @@
 -record(comment, {id, thread, status=active, user, tripcode, body, file}).
 
 -export([new/1, new/2, new_thread/2, reply/3]).
--export([list/0, status/1, summarize/1, default_name/1, get_thread/2]).
--export([delete/2, revive/2, purge/2]).
+-export([list/0, status/1, summarize/1, default_name/1, get_thread/1]).
+-export([move/2, delete/2, revive/2, purge/2]).
 
 -define(AUTH_NODE, 'erl_chan@127.0.1.1').
 
@@ -47,6 +47,10 @@ new(BoardName, Description) when is_atom(BoardName) ->
 		 db:atomic_insert(#board{name=BoardName, description=Description, created=now()}),
 		 supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName))
     end.
+
+move(Thread, NewBoard) ->
+    Rec = find_thread(Thread),
+    gen_server:call(Rec#thread.board, {move_thread, Rec, NewBoard}).
 
 purge(Board, {image, CommentId}) -> 
     gen_server:call(Board, {purge_comment_image, CommentId});
@@ -82,7 +86,9 @@ summarize(Board) ->
     gen_server:call(Board, summarize).
 
 default_name(Board) -> gen_server:call(Board, default_name).
-get_thread(Board, Thread) -> gen_server:call(Board, {get_thread, Thread}).
+get_thread(Thread) -> 
+    #thread{ board=Board } = find_thread(Thread),
+    gen_server:call(Board, {get_thread, Thread}).
 new_thread(Board, {User, Tripcode, Comment, File}) -> 
     gen_server:call(Board, {new_thread, User, Tripcode, Comment, File}).
 reply(Board, Thread, {User, Tripcode, Body, File}) -> 
@@ -149,6 +155,10 @@ handle_call({change_status, comment, Id, Index, NewValue}, _From, BoardName) ->
     {reply, {Rec#comment.thread, NewTup}, BoardName};
 
 %%%%%%%%%% non-delete write operations
+handle_call({move_thread, ThreadRec, NewBoard}, _From, BoardName) ->
+    New = ThreadRec#thread{board=NewBoard},
+    db:atomic_insert(New),
+    {reply, to_tup(New), BoardName};
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     Id = now(),
     Trip = triphash(Tripcode),
