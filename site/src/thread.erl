@@ -90,6 +90,10 @@ finish_upload_event(_Tag, _OriginalFilename, LocalFile, _Node) ->
 post_loop() ->
     receive 
         'INIT' -> ok; %% init is sent to the first client in the comet pool. We don't care in this case.
+	{thread_moved, NewBoard} ->
+	    wf:replace(".breadcrumb_trail", #crumbs{ board=NewBoard, thread=util:now_to_id_string(wf:state(thread)) }),
+	    wf:wire(util:highlight(breadcrumb_trail)),
+	    wf:flash(["This thread has moved to ", #link{text=NewBoard, url=util:uri({board, NewBoard})}]);
         {message, Comment} ->
             wf:insert_bottom(messages, element_comment:from_tup(Comment)),
 	    wf:wire(util:highlight(".comment:last")),

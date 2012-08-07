@@ -22,7 +22,7 @@ render_element(#thread_moderation{thread_id=Thread, status=deleted}) ->
     render_block([#link{id=RevId, text="Phoneix Down, Thread Edition"}]).
 
 render_block(Body) ->
-    #span{ show_if=wf:role(admin),
+    #span{ show_if=util:board_permission_p(),
 	   body=[#span{ class=admin_links, body=Body},
 		 #br{ class=clear }] }.
 
@@ -37,6 +37,6 @@ event({move_thread, Thread, Field}) ->
     Board = list_to_atom(BoardStr),
     New = rpc:call(?BOARD_NODE, board, move, [Thread, Board]),
     wf:send_global(wf:state(board), {replace_thread, Thread, {moved, BoardStr}}),
+    wf:send_global(Thread, {thread_moved, BoardStr}),
     wf:send_global(Board, {thread, New}),
-    wf:replace(".breadcrumb_trail", #crumbs{ board=BoardStr, thread=util:now_to_id_string(Thread) }),
     wf:wire(util:highlight(".breadcrumb_trail")).

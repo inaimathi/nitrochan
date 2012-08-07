@@ -30,7 +30,6 @@ exists_p(BoardName) ->
 	[] -> false;
 	_ -> true
     end.     
-
 new(BoardName) when is_atom(BoardName) -> new(BoardName, "").
 new(BoardName, Description) when is_atom(BoardName) ->
     case exists_p(BoardName) of

@@ -22,7 +22,7 @@ render_element(#comment{status=deleted, comment_id=Id}) ->
 	   body=[#span{ class=notice, text="Deleted" },
 		 #span{ class=comment_id, text=util:now_to_id_string(Id) },
 		 #span{ class=comment_datetime, text=util:now_to_datetime_string(Id) },
-		 #span{ show_if=wf:role(admin),
+		 #span{ show_if=util:board_permission_p(),
 			class=admin_links,
 			body=[ #link{id=RevId, text="Phoneix Down"} ]},
 		 #br{ class=clear }]};
@@ -41,7 +41,7 @@ render_element(#comment{comment_id=Id, file=File, tripcode=T, body=Body, user=Us
 					actions=util:highlight()} },
 		 #span{ class=comment_id, text=util:now_to_id_string(Id) },
 		 #span{ class=comment_datetime, text=util:now_to_datetime_string(Id) },
-		 #span{ show_if=wf:role(admin),
+		 #span{ show_if=util:board_permission_p(),
 			class=admin_links,
 			body=[ #link{id=DelId, text="Delete Comment"},
 			       #link{id=DelImgId, show_if=image_present_p(File), text="Delete Image"},

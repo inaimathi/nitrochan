@@ -78,7 +78,10 @@
     Another way to solve this would be to remove the board/thread hierarchy.
     That way moving a thread over has no actual effect on any links, but the breadcrumb trail
     becomes a personal thing; we should notify people in threads that they've been transplanted.
-*** TODO start new boards
+*** DONE start new boards
+    CLOSED: [2012-08-07 Tue 02:54]
+    - CLOSING NOTE [2012-08-07 Tue 02:55] \\
+      Admins can now start new boards, though the interface and name of the relevant module is less than stellar
 *** TODO protect threads in some pre-emptive way. Not sure how yet, so no-op this one for now
        - force captcha?
        - force login?
@@ -172,6 +175,4 @@
 *** TODO Link to comment
 *** TODO Quote things
     Actually, pretty much the whole markdown system could stand to be incorporated.
-* Notes
-  Any other thoughts about the project go here
-  
+** TODO Spoiler/NSFW image tags
