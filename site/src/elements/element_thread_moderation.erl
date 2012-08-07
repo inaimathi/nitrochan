@@ -30,14 +30,13 @@ event({delete_thread, ThreadId}) ->
     util:state_change(delete, ThreadId);
 event({revive_thread, ThreadId}) ->
     util:state_change(revive, ThreadId);
-event({move_thread, Thread, "Move Thread"}) ->
+event({move_thread, _Thread, "Move Thread"}) ->
     haha_NO;
 event({move_thread, Thread, Field}) ->
     BoardStr = wf:q(Field),
     Board = list_to_atom(BoardStr),
-    %% wf:send_global(wf:state(board), 
-    %% 		   {replace_thread, Thread, Elem}),
     New = rpc:call(?BOARD_NODE, board, move, [Thread, Board]),
     wf:send_global(wf:state(board), {replace_thread, Thread, {moved, BoardStr}}),
-    wf:send_global(Thread, {thread_moved, BoardStr}),
-    erlang:display({moving, Thread, to, Board}).
+    wf:send_global(Board, {thread, New}),
+    wf:replace(".breadcrumb_trail", #crumbs{ board=BoardStr, thread=util:now_to_id_string(Thread) }),
+    wf:wire(util:highlight(".breadcrumb_trail")).

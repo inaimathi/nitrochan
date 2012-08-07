@@ -49,9 +49,6 @@
      Done
    - Really don't know why I'd go lower than 100 characters or so for either tripcode or username
    - Consider doing ~100 for username and ~250 for tripcode
-** TODO Chan-style tripcodes (no separate field, substring the username)
-   - If you go this way, limit that new multi-purpose field to ~250 total
-   - Not entirely sure it's a good idea, though
 ** DONE Have a default username set by board, and use that if the user doesn't enter one
    CLOSED: [2012-07-27 Fri 17:10]
    - CLOSING NOTE [2012-07-27 Fri 17:11] \\
@@ -70,7 +67,10 @@
     CLOSED: [2012-08-03 Fri 18:39]
     - CLOSING NOTE [2012-08-03 Fri 18:39] \\
       Thread deletion now works
-*** TODO move threads to different boards
+*** DONE move threads to different boards
+    CLOSED: [2012-08-06 Mon 21:05]
+    - CLOSING NOTE [2012-08-06 Mon 21:05] \\
+      Threads can now be properly moved between boards
     Keep in mind that you'll need to
     1. Move the thread
     2. Redirect everyone that was on the old thread
@@ -158,7 +158,7 @@
    CLOSED: [2012-07-30 Mon 16:50]
    - CLOSING NOTE [2012-07-30 Mon 16:50] \\
      Done.
-
+     
 ** DONE when a new message is added to a thread page, scroll down if the user is already at or near the bottom
    CLOSED: [2012-08-04 Sat 01:35]
    - CLOSING NOTE [2012-08-04 Sat 01:36] \\
@@ -168,6 +168,10 @@
    CLOSED: [2012-08-04 Sat 01:18]
    - CLOSING NOTE [2012-08-04 Sat 01:18] \\
      Deletions and restores now send messages to appropriate comet pools
+** TODO Comment markup components
+*** TODO Link to comment
+*** TODO Quote things
+    Actually, pretty much the whole markdown system could stand to be incorporated.
 * Notes
   Any other thoughts about the project go here
   
