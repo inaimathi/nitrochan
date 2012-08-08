@@ -1,7 +1,7 @@
 %%% custom elements
 -record(comment_form, {?ELEMENT_BASE(element_comment_form)}).
--record(comment, {?ELEMENT_BASE(element_comment), comment_id, status, user, tripcode, body, file}).
--record(thread_summary, {?ELEMENT_BASE(element_thread_summary), thread_id, status, last_update, first_comment, last_comments, comment_count}).
+-record(comment, {?ELEMENT_BASE(element_comment), properties}).
+-record(thread_summary, {?ELEMENT_BASE(element_thread_summary), properties}).
 
 -record(board_list, {?ELEMENT_BASE(element_board_list), big, extra_classes=[]}).
 

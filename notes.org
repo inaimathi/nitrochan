@@ -5,7 +5,7 @@
 ** external programs
    imagemagick
 
-* To Dos
+ Dos
   
 ** DONE should remember name and tripcode when starting a thread
    CLOSED: [2012-07-23 Mon 22:03]
@@ -176,3 +176,11 @@
 *** TODO Quote things
     Actually, pretty much the whole markdown system could stand to be incorporated.
 ** TODO Spoiler/NSFW image tags
+** TODO Stickied threads
+*** TODO Make threads stickiable
+*** TODO Allow moderators to sticky threads
+** TODO comment responses
+   When a new comment is posted, analyze all the comments it responds to and cache the link in those comments
+   Max ten comments being referred to, only add a unique link (if someone puts in 30 links to the same comment,
+   the effect should be a single link to that comment).
+** TODO convert the nitrogen/erlang communication layer to proplists rather than using records or tuples

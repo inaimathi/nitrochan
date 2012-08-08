@@ -33,7 +33,7 @@ event({revive_thread, ThreadId}) ->
 event({move_thread, _Thread, "Move Thread"}) ->
     haha_NO;
 event({move_thread, Thread, Field}) ->
-    BoardStr = wf:q(Field),
+    BoardStr = util:q(Field),
     Board = list_to_atom(BoardStr),
     New = rpc:call(?BOARD_NODE, board, move, [Thread, Board]),
     wf:send_global(wf:state(board), {replace_thread, Thread, {moved, BoardStr}}),

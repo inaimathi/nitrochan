@@ -8,9 +8,10 @@
 
 -export([create/0]).
 
+%% -define(TO_PROP(Type), to_prop(Rec) when is_record(Rec, Type) -> common:rec_to_proplist(Rec, recrd_info(fields, Type))).
 -record(board, {name, description, created, max_threads=300, max_thread_size=500, default_name="Anonymous"}).
 -record(thread, {id, board, status=active, last_update, first_comment, last_comments=[], comment_count}).
--record(comment, {id, thread, status=active, user, tripcode, body, file}).
+-record(comment, {id, thread, status=active, user, tripcode, body, file}). %% cache preview, responses
 
 -export([new/1, new/2, new_thread/2, reply/3]).
 -export([list/0, thread_meta/1, summarize/1, default_name/1, get_thread/1]).
@@ -95,7 +96,7 @@ reply(Board, Thread, {User, Tripcode, Body, File}) ->
 %%%%%%%%%%%%%%%%%%%% internal call handling
 %%%%%%%%%% read operations
 handle_call(summarize, _From, BoardName) -> 
-    Res = db:do(qlc:q([to_tup(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
+    Res = db:do(qlc:q([to_prop(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName])),
     Threads = case Res of
 		  [] -> [];
 		  [Thread] -> [Thread];
@@ -103,10 +104,10 @@ handle_call(summarize, _From, BoardName) ->
 	      end,
     {reply, Threads, BoardName};
 handle_call({summarize, ThreadId}, _From, BoardName) -> 
-    [Res] = db:do(qlc:q([to_tup(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName, X#thread.id =:= ThreadId])),
+    [Res] = db:do(qlc:q([to_prop(X) || X <- mnesia:table(thread), X#thread.board =:= BoardName, X#thread.id =:= ThreadId])),
     {reply, Res, BoardName};
 handle_call({get_thread, Thread}, _From, BoardName) -> 
-    Res = db:do(qlc:q([to_tup(X) || X <- mnesia:table(comment), X#comment.thread =:= Thread])),
+    Res = db:do(qlc:q([to_prop(X) || X <- mnesia:table(comment), X#comment.thread =:= Thread])),
     {reply, Res, BoardName};
 
 %%%%%%%%%% real delete operations
@@ -114,7 +115,7 @@ handle_call({purge_thread, ThreadId}, _From, BoardName) ->
     [First | Rest] = db:do(qlc:q([X || X <- mnesia:table(comment), X#comment.thread =:= ThreadId])),
     Thread = find_thread(ThreadId),
     Comm = purged_comment(First),
-    New = Thread#thread{status=purged, first_comment=to_tup(Comm), last_comments=[], comment_count=1},
+    New = Thread#thread{status=purged, first_comment=to_prop(Comm), last_comments=[], comment_count=1},
     db:transaction(fun() ->
 			   lists:map(fun mnesia:delete_object/1, Rest),
 			   mnesia:write(Comm),
@@ -125,14 +126,14 @@ handle_call({purge_comment, CommentId}, _From, BoardName) ->
     Comment = find_comm(CommentId),
     Thread = find_thread(Comment#comment.thread),
     New = purged_comment(Comment),
-    db:atomic_insert([replace_comment_cache(Thread, CommentId, to_tup(New)), New]),
+    db:atomic_insert([replace_comment_cache(Thread, CommentId, to_prop(New)), New]),
     {reply, Comment#comment.file, BoardName};
 handle_call({purge_comment_image, CommentId}, _From, BoardName) ->
     Comment = find_comm(CommentId),
     Thread = find_thread(Comment#comment.thread),
     OldFile = Comment#comment.file,
     New = Comment#comment{file=purged},
-    db:atomic_insert([replace_comment_cache(Thread, CommentId, to_tup(New)), New]),
+    db:atomic_insert([replace_comment_cache(Thread, CommentId, to_prop(New)), New]),
     {reply, OldFile, BoardName};
 
 %%%%%%%%%% hide operation
@@ -140,12 +141,12 @@ handle_call({change_status, thread, Id, Index, NewValue}, _From, BoardName) ->
     Rec = find_thread(Id),
     New = setelement(Index, Rec, NewValue),
     db:atomic_insert(New),
-    {reply, to_tup(New), BoardName};
+    {reply, to_prop(New), BoardName};
 handle_call({change_status, comment, Id, Index, NewValue}, _From, BoardName) ->
     Rec = find_comm(Id),
     Thread = find_thread(Rec#comment.thread),
     New = setelement(Index, Rec, NewValue),
-    NewTup = to_tup(New),
+    NewTup = to_prop(New),
     db:atomic_insert([replace_comment_cache(Thread, Id, NewTup), New]),
     {reply, {Rec#comment.thread, NewTup}, BoardName};
 
@@ -153,28 +154,28 @@ handle_call({change_status, comment, Id, Index, NewValue}, _From, BoardName) ->
 handle_call({move_thread, ThreadRec, NewBoard}, _From, BoardName) ->
     New = ThreadRec#thread{board=NewBoard},
     db:atomic_insert(New),
-    {reply, to_tup(New), BoardName};
+    {reply, to_prop(New), BoardName};
 handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
     ThreadId = now(),
     CommId = now(),
     Trip = triphash(Tripcode),
     Comment = #comment{id=CommId, thread=ThreadId, user=User, tripcode=Trip, body=Body, file=File},
     Thread = #thread{id=ThreadId, board=BoardName, last_update=ThreadId, comment_count=1, 
-		     first_comment=to_tup(Comment)},
+		     first_comment=to_prop(Comment)},
     db:atomic_insert([Thread, Comment]),
-    {reply, to_tup(Thread), BoardName};
+    {reply, to_prop(Thread), BoardName};
 handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) -> 
     Rec = find_thread(ThreadId),
     active = Rec#thread.status,
     Id = now(),
     Trip = triphash(Tripcode),
     Comment = #comment{id=Id, thread=ThreadId, user=User, tripcode=Trip, body=Body, file=File},
-    LastComm = last_n(Rec#thread.last_comments, to_tup(Comment), 4),
+    LastComm = last_n(Rec#thread.last_comments, to_prop(Comment), 4),
     Updated = Rec#thread{last_update=Id,
 			 comment_count=Rec#thread.comment_count + 1,
 			 last_comments=LastComm},
     db:atomic_insert([Comment, Updated]),
-    {reply, to_tup(Comment), BoardName}.
+    {reply, to_prop(Comment), BoardName}.
 
 %%%%%%%%%%%%%%%%%%%% local utility
 triphash(Tripcode) ->
@@ -201,8 +202,11 @@ replace_comment_cache(Thread, CommentId, NewComment) ->
 				      NewComment),
     Thread#thread{first_comment=First, last_comments=Rest}.
 
-sort_threads({_, _, A, _, _}, {_, _, B, _, _}) ->
-    common:now_to_seconds(A) > common:now_to_seconds(B).
+sort_threads(A, B) ->
+    update_time(A) > update_time(B).
+update_time(ThreadProp) ->
+    common:now_to_seconds(proplists:get_value(last_update, ThreadProp)).
+
 
 collect_files(Comments) -> collect_files(Comments, []).
 collect_files([], Acc) -> Acc;
@@ -213,12 +217,10 @@ collect_files([Comment | Rest], Acc) ->
 	Pic -> collect_files(Rest, [Pic | Acc])
     end.
 
-to_tup(Rec) when is_record(Rec, thread) ->
-    {Rec#thread.id, Rec#thread.status, Rec#thread.last_update, Rec#thread.comment_count,
-     [Rec#thread.first_comment | Rec#thread.last_comments]};
-to_tup(Rec) when is_record(Rec, comment) ->
-    {Rec#comment.id, Rec#comment.status, Rec#comment.user, Rec#comment.tripcode, 
-     Rec#comment.body, Rec#comment.file}.
+to_prop(Rec) when is_record(Rec, thread) -> 
+    common:rec_to_proplist(Rec, record_info(fields, thread));
+to_prop(Rec) when is_record(Rec, comment) ->
+    common:rec_to_proplist(Rec, record_info(fields, comment)).
 
 %%%%%%%%%%%%%%%%%%%% DB-related
 create() -> 

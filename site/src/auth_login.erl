@@ -23,7 +23,7 @@ inner_body() ->
     ].
 
 authenticate(_Tag, Value) ->
-    case rpc:call(?AUTH_NODE, users, auth, [Value, wf:q(txt_passphrase)]) of
+    case rpc:call(?AUTH_NODE, users, auth, [Value, util:q(txt_passphrase)]) of
 	{_Id, User, Groups} -> 
 	    wf:session(admin_groups, Groups),
 	    wf:user(User),

@@ -23,7 +23,7 @@ inner_body(Board) ->
     Threads =  rpc:call(?BOARD_NODE, board, summarize, [wf:state(board)]),
     [ 
       #crumbs{ board=Board },
-      #panel {id=messages, body= lists:map(fun element_thread_summary:from_tup/1, Threads)},
+      #panel {id=messages, body=lists:map(fun element_thread_summary:from_prop/1, Threads)},
       #comment_form{}
     ].
 
@@ -32,7 +32,7 @@ inner_body(Board) ->
 start_upload_event(image) -> ok.
 
 collect_tripcode() ->
-    case {wf:user(), wf:q(txt_tripcode)} of
+    case {wf:user(), util:q(txt_tripcode)} of
 	{undefined, ""} -> false;
 	{undefined, Trip} -> IP = lists:map(fun erlang:integer_to_list/1, tuple_to_list(wf:peer_ip())),
 			     string:join([Trip | IP], ".");
@@ -40,21 +40,22 @@ collect_tripcode() ->
     end.
 
 collect_comment(LocalFileName) ->
-    Body = wf:q(txt_comment), 
-    Username = wf:coalesce([wf:user(), wf:q(txt_user_name)]),
-    Trip = wf:coalesce([wf:q(txt_tripcode), ""]),
+    Body = util:q(txt_comment), 
+    Username = wf:coalesce([wf:user(), util:q(txt_user_name)]),
+    Trip = wf:coalesce([util:q(txt_tripcode), ""]),
     case {Body, LocalFileName, length(Body) > 3000, length(Username) > 100, length(Trip) > 250} of
 	{"", undefined, _, _, _} -> {false, "You need either a comment or an image"};
 	{_, _, true, _, _} -> {false, "Your comment can't be longer than 3000 characters. What the fuck are you writing, a novel?"};
 	{_, _, _, true, _} -> {false, "Your username can't be longer than 100 characters. And even that's excessive."};
 	{_, _, _, _, true} -> {false, "Your tripcode can't be longer than 250 characters. Really, you're secure by like 132. Anything after that is wasted effort."};
-	_ -> wf:session(username, Username), wf:session(tripcode, wf:q(txt_tripcode)), wf:session(tripcode, wf:q(txt_tripcode)),
+	_ -> wf:session(username, Username), wf:session(tripcode, util:q(txt_tripcode)), wf:session(tripcode, util:q(txt_tripcode)),
 	     {Username, collect_tripcode(), re:split(Body, "\n", [{return, list}]), LocalFileName}
     end.
 
 post(Comment) ->
     Board = wf:state(board),
-    Res = {Id, _, _, _, _} = rpc:call(?BOARD_NODE, board, new_thread, [Board, Comment]),
+    Res = rpc:call(?BOARD_NODE, board, new_thread, [Board, Comment]),
+    Id = proplists:get_value(id, Res),
     wf:send_global(Board, {thread, Res}),
     wf:redirect(util:uri({thread, Id})).
 
@@ -85,11 +86,11 @@ post_loop() ->
 	{thread, Thread} ->
 	    [Id | _] = tuple_to_list(Thread),
 	    wf:remove(util:now_to_thread_id(Id)),
-	    wf:insert_top(messages, element_thread_summary:from_tup(Thread)),
+	    wf:insert_top(messages, element_thread_summary:from_prop(Thread)),
 	    wf:wire(util:highlight(".thread:first"));
 	{thread_update, ThreadId, ThreadSummary} ->
 	    wf:remove(util:now_to_thread_id(ThreadId)),
-	    wf:insert_top(messages, element_thread_summary:from_tup(ThreadSummary)),
+	    wf:insert_top(messages, element_thread_summary:from_prop(ThreadSummary)),
 	    wf:wire(util:highlight(".thread:first"));
 	{thread_moved, NewBoard} ->
 	    wf:replace(breadcrumb_trail, #crumbs{ board=NewBoard, thread=wf:state(thread) }),
@@ -106,10 +107,10 @@ post_loop() ->
 						      #link{text=BoardStr, url=util:uri({board, BoardStr})}]}]});
 	{replace_thread, ElemId, Elem} ->
 	    wf:replace(util:now_to_thread_id(ElemId), 
-		       element_thread_summary:from_tup(Elem));
+		       element_thread_summary:from_prop(Elem));
 	{replace_comment, ElemId, Elem} ->
 	    wf:replace(util:now_to_css_id(ElemId), 
-		       element_comment:from_tup(Elem))
+		       element_comment:from_prop(Elem))
     end,
     wf:flush(),
     post_loop().
