@@ -11,7 +11,7 @@
 %% -define(TO_PROP(Type), to_prop(Rec) when is_record(Rec, Type) -> common:rec_to_proplist(Rec, recrd_info(fields, Type))).
 -record(board, {name, description, created, max_threads=300, max_thread_size=500, default_name="Anonymous"}).
 -record(thread, {id, board, status=active, last_update, first_comment, last_comments=[], comment_count}).
--record(comment, {id, thread, status=active, user, tripcode, body, file}). %% cache preview, responses
+-record(comment, {id, thread, status=active, user, tripcode, body, preview="", responses=[], file}). %% cache preview, responses
 
 -export([new/1, new/2, new_thread/2, reply/3]).
 -export([list/0, thread_meta/1, summarize/1, default_name/1, get_thread/1]).
