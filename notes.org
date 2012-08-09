@@ -58,7 +58,58 @@
    CLOSED: [2012-07-27 Fri 17:10]
    - CLOSING NOTE [2012-07-27 Fri 17:11] \\
      Check. The default default_name is "Anonymous".
-** TODO Hook up auth and set up a moderation system
+** DONE Change the echo functions to elements
+   CLOSED: [2012-07-30 Mon 10:53]
+   - CLOSING NOTE [2012-07-30 Mon 10:54] \\
+     -Done. Instead of having echo functions, we now have element records and associated rendering functions.
+     -The more comlex elements have a from_tup/1 function which takes model output and renders the appropriate element
+** DONE Add description and deleted image for boards
+   CLOSED: [2012-08-03 Fri 18:41]
+   - CLOSING NOTE [2012-08-03 Fri 18:42] \\
+     Not doing deleted-image field.
+     A deleted image is represented as a span with the text "DELETED FILE" in it. 
+     The actual contents/background image of said span will be determined via CSS (which we should be able to vary by board)
+   Added and hooked up description field.
+   Added deleted image field, but haven't hooked it up properly yet
+** DONE Add a way to delete images/comments/threads/boards
+   CLOSED: [2012-07-30 Mon 16:51]
+   - CLOSING NOTE [2012-07-30 Mon 16:53] \\
+     - Threads, comments and images are now deletable (though not undeletable, and never will be)
+     - Boards can't be deleted, the point of the deletion elements is going to be limiting spam and idiocy, and I can't see an entire board getting to the point that it needs to go
+** DONE Check whether the thread is active before displaying certain things
+   CLOSED: [2012-07-30 Mon 23:22]
+   - CLOSING NOTE [2012-07-30 Mon 23:22] \\
+     Reply link now only shown for active threads (will need to figure out what's happening when it comes to archived threads later)
+   The reply button shouldn't be shown for a dead thread
+** DONE Separate summarize/1 into two functions
+   CLOSED: [2012-07-30 Mon 23:05]
+   - CLOSING NOTE [2012-07-30 Mon 23:05] \\
+     Done. Note that summarize/1 is now only used by the external API
+   One that deals with converting records to tuples (to_tup/1)
+   One that deals with outputting summary data (summarize/1)
+** DONE Re-write the database interactions in boards.erl to use the db: package more effectively (common is already a dependency)
+   CLOSED: [2012-07-30 Mon 16:50]
+   - CLOSING NOTE [2012-07-30 Mon 16:50] \\
+     Done.
+     
+** DONE when a new message is added to a thread page, scroll down if the user is already at or near the bottom
+   CLOSED: [2012-08-04 Sat 01:35]
+   - CLOSING NOTE [2012-08-04 Sat 01:36] \\
+     If a user is within 1000px (may need to adjust the number) of the bottom, the view scrolls down to show the latest comment
+** DONE Make deletion work in realtime using the comet-pooling feature
+   CLOSED: [2012-08-04 Sat 01:18]
+   - CLOSING NOTE [2012-08-04 Sat 01:18] \\
+     Deletions and restores now send messages to appropriate comet pools
+** DONE convert the nitrogen/erlang communication layer to proplists rather than using records or tuples
+   CLOSED: [2012-08-09 Thu 14:09]
+   - CLOSING NOTE [2012-08-09 Thu 14:09] \\
+     Done
+
+** TODO [#A] comment responses
+   When a new comment is posted, analyze all the comments it responds to and cache the link in those comments
+   Max ten comments being referred to, only add a unique link (if someone puts in 30 links to the same comment,
+   the effect should be a single link to that comment).
+** TODO [#A] Hook up auth and set up a moderation system
    Mods should be able to 
 *** DONE delete pictures
     CLOSED: [2012-08-01 Wed 18:05]
@@ -103,7 +154,7 @@
 	  can't start communities or moderate without an account.
 *** TODO set up user management frontend
     Draggable-based system to let mods organize their users in cool ways
-** TODO set up registration and login system
+** TODO [#A] set up registration and login system
    Mods aren't the only ones that can register.
    You should set up a registration system that all users can optionally participate in.
    If you're a logged in member, you shouldn't get a tripcode field; instead, the system should
@@ -131,61 +182,15 @@
       Added appropriate, contextually displayed links to the comment_form
     I'm thinking set up the posting form as a toolbar, and add this to that
 *** TODO set up RSA-key login system, see how it works and what components it needs
-** DONE Change the echo functions to elements
-   CLOSED: [2012-07-30 Mon 10:53]
-   - CLOSING NOTE [2012-07-30 Mon 10:54] \\
-     -Done. Instead of having echo functions, we now have element records and associated rendering functions.
-     -The more comlex elements have a from_tup/1 function which takes model output and renders the appropriate element
-** TODO Change some of the event functions into actions
-** TODO Create custom form element/behavior to avoid the event finangling with the default nitrogen upload
-** DONE Add description and deleted image for boards
-   CLOSED: [2012-08-03 Fri 18:41]
-   - CLOSING NOTE [2012-08-03 Fri 18:42] \\
-     Not doing deleted-image field.
-     A deleted image is represented as a span with the text "DELETED FILE" in it. 
-     The actual contents/background image of said span will be determined via CSS (which we should be able to vary by board)
-   Added and hooked up description field.
-   Added deleted image field, but haven't hooked it up properly yet
-** DONE Add a way to delete images/comments/threads/boards
-   CLOSED: [2012-07-30 Mon 16:51]
-   - CLOSING NOTE [2012-07-30 Mon 16:53] \\
-     - Threads, comments and images are now deletable (though not undeletable, and never will be)
-     - Boards can't be deleted, the point of the deletion elements is going to be limiting spam and idiocy, and I can't see an entire board getting to the point that it needs to go
-** DONE Check whether the thread is active before displaying certain things
-   CLOSED: [2012-07-30 Mon 23:22]
-   - CLOSING NOTE [2012-07-30 Mon 23:22] \\
-     Reply link now only shown for active threads (will need to figure out what's happening when it comes to archived threads later)
-   The reply button shouldn't be shown for a dead thread
-** DONE Separate summarize/1 into two functions
-   CLOSED: [2012-07-30 Mon 23:05]
-   - CLOSING NOTE [2012-07-30 Mon 23:05] \\
-     Done. Note that summarize/1 is now only used by the external API
-   One that deals with converting records to tuples (to_tup/1)
-   One that deals with outputting summary data (summarize/1)
-** DONE Re-write the database interactions in boards.erl to use the db: package more effectively (common is already a dependency)
-   CLOSED: [2012-07-30 Mon 16:50]
-   - CLOSING NOTE [2012-07-30 Mon 16:50] \\
-     Done.
-     
-** DONE when a new message is added to a thread page, scroll down if the user is already at or near the bottom
-   CLOSED: [2012-08-04 Sat 01:35]
-   - CLOSING NOTE [2012-08-04 Sat 01:36] \\
-     If a user is within 1000px (may need to adjust the number) of the bottom, the view scrolls down to show the latest comment
-** TODO Add board-specific CSS option
-** DONE Make deletion work in realtime using the comet-pooling feature
-   CLOSED: [2012-08-04 Sat 01:18]
-   - CLOSING NOTE [2012-08-04 Sat 01:18] \\
-     Deletions and restores now send messages to appropriate comet pools
-** TODO Comment markup components
+** TODO [#B] Comment markup components
 *** TODO Link to comment
 *** TODO Quote things
     Actually, pretty much the whole markdown system could stand to be incorporated.
-** TODO Spoiler/NSFW image tags
-** TODO Stickied threads
+** TODO [#B] Spoiler/NSFW image tags
+** TODO [#B] Stickied threads
 *** TODO Make threads stickiable
 *** TODO Allow moderators to sticky threads
-** TODO comment responses
-   When a new comment is posted, analyze all the comments it responds to and cache the link in those comments
-   Max ten comments being referred to, only add a unique link (if someone puts in 30 links to the same comment,
-   the effect should be a single link to that comment).
-** TODO convert the nitrogen/erlang communication layer to proplists rather than using records or tuples
+** TODO [#B] Change some of the event functions into actions
+** TODO [#B] Create custom form element/behavior to avoid the event finangling with the default nitrogen upload
+** TODO [#B] Add board-specific CSS option
+
