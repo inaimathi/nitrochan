@@ -44,3 +44,6 @@ start-nitro:
 
 clean:
 	rm -r ebin/* deps/*
+
+wc:
+	wc -l src/* site/src/*.erl site/src/elements/*erl site/static/css/*css
