@@ -22,6 +22,7 @@
 .comment .comment_datetime { display: block; font-size: x-small; font-style: oblique; }
 .comment img { float: left; margin: 5px 10px 10px 0px; } 
 .comment p { margin: 0px; padding: 0px; }
+.comment .omitted { font-size: small; font-style: oblique; }
 .clear { clear: both; }
 
 .thread .admin_links a, .thread .admin_links select { float:right; margin-right: 10px; }

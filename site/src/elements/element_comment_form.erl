@@ -30,8 +30,20 @@ collect_tripcode() ->
 process_comment_body(Body) -> 
     StripFn = fun (Str, Reg) -> re:replace(Str, Reg, "", [{return, list}]) end,
     Stripped = StripFn(StripFn(Body, "^[\s\n]+"), "[\s\n]+$"),
-    Split = re:split(Stripped, "\n", [{return, list}]),
-    {lists:sublist(Stripped, 250), Split}.
+    [First | Rest] = re:split(Stripped, "\n", [{return, list}]),
+    Preview = case {length(First), length(Rest)}  of
+		  {Chars, 0} when Chars =< 250 -> 
+		      [lists:sublist(First, 250)];
+		  {Chars, 0} -> 
+		      [lists:sublist(First, 250) ++ "...", 
+		       lists:flatten(io_lib:format("Omitted [~p] characters", [Chars - 250]))];
+		  {Chars, Lines} when Chars =< 250 ->
+		      [lists:sublist(First, 250), lists:flatten(io_lib:format("Omitted [~p] lines", [Lines]))];
+		  {Chars, Lines} ->
+		      [lists:sublist(First, 250) ++ "...",
+		       lists:flatten(io_lib:format("Omitted [~p] characters and [~p] lines", [Chars - 250, Lines]))]
+	      end,
+    {Preview, [First | Rest]}.
 
 collect_comment(LocalFileName) ->
     Body = util:q(txt_comment), 

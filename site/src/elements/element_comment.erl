@@ -40,10 +40,10 @@ render_element(#comment{summary=Summary_p, properties=Prop}) ->
 					#link{id=RevImgId, show_if=deleted_image_p(File), text="Phoneix Down, Image Edition"}]},
 			  #br{ class=clear },
 			  render_image(File),
-			  render_body(case Summary_p of
-					  true -> [proplists:get_value(preview, Prop)];
-					  _ -> Body
-				      end),
+			  case Summary_p of
+			      true -> render_summary(proplists:get_value(preview, Prop));
+			      _ -> render_body(Body)
+			  end,
 			  #br{ class=clear }]}
     end.
 
@@ -67,6 +67,13 @@ render_user(_, []) ->
     #span{ class=username, text=rpc:call(?BOARD_NODE, board, default_name, [wf:state(board)]) };
 render_user(_, User) ->
     #span{ class=username, text=User }.
+
+render_summary([Line]) ->
+    #p{text=Line};
+render_summary([Line, Omitted]) ->
+    [#p{text=Line}, #p{class=omitted, text=Omitted}];
+render_summary(Line) ->
+    [#p{text=Line}].
 
 render_body([[]]) -> "";
 render_body(undefined) -> "";
