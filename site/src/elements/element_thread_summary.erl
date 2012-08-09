@@ -22,10 +22,12 @@ render_element(#thread_summary{properties=Props}) ->
 				   #thread_moderation{thread_id=Id, status=Status}|
 				   case Count of
 				       N when N < 6 ->
-					   lists:map(fun element_comment:from_prop/1, [First | Last]);
+					   lists:map(fun comment_summary/1, [First | Last]);
 				       _ -> 
 					   [element_comment:from_prop(First), 
 					    #span{text=wf:f("... snip [~p] comments...", [Count - 5])} | 
-					    lists:map(fun element_comment:from_prop/1, Last)]
+					    lists:map(fun comment_summary/1, Last)]
 				   end]}
     end.
+
+comment_summary(C) -> element_comment:from_prop({summary, C}).

@@ -8,10 +8,9 @@
 
 -export([create/0]).
 
-%% -define(TO_PROP(Type), to_prop(Rec) when is_record(Rec, Type) -> common:rec_to_proplist(Rec, recrd_info(fields, Type))).
 -record(board, {name, description, created, max_threads=300, max_thread_size=500, default_name="Anonymous"}).
 -record(thread, {id, board, status=active, last_update, first_comment, last_comments=[], comment_count}).
--record(comment, {id, thread, status=active, user, tripcode, body, preview="", responses=[], file}). %% cache preview, responses
+-record(comment, {id, thread, status=active, user, tripcode, body, preview="", responses=[], file}).
 
 -export([new/1, new/2, new_thread/2, reply/3]).
 -export([list/0, thread_meta/1, summarize/1, default_name/1, get_thread/1]).
@@ -25,24 +24,21 @@ list() -> db:do(qlc:q([{X#board.name, X#board.description} || X <- mnesia:table(
 thread_meta(Id) ->
     #thread{board=Board, status=Stat, last_update=Last, comment_count=Count} = find_thread(Id),
     { Board, Stat, default_name(Board), Last, Count }.
-
-exists_p(BoardName) -> 
-    case db:do(qlc:q([X#board.name || X <- mnesia:table(board), X#board.name =:= BoardName])) of
-	[] -> false;
-	_ -> true
-    end.     
+     
 new(BoardName) when is_atom(BoardName) -> new(BoardName, "").
 new(BoardName, Description) when is_atom(BoardName) ->
     case exists_p(BoardName) of
 	true -> already_exists;
 	false -> try
 		     %% in a try block because the auth node may not exist. Intentionally.
+		     %% IF it does, we want a group with the same name as our board
 		     rpc:call(?AUTH_NODE, groups, add_special, [BoardName, atom_to_list(BoardName) ++ " board moderators"])
 		 catch
 		     error:_ -> false
 		 end,
 		 db:atomic_insert(#board{name=BoardName, description=Description, created=now()}),
-		 supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName))
+		 supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName)),
+		 ok
     end.
 
 move(Thread, NewBoard) ->
@@ -88,10 +84,10 @@ default_name(Board) ->
 get_thread(Thread) -> 
     #thread{ board=Board } = find_thread(Thread),
     gen_server:call(Board, {get_thread, Thread}).
-new_thread(Board, {User, Tripcode, Comment, File}) -> 
-    gen_server:call(Board, {new_thread, User, Tripcode, Comment, File}).
-reply(Board, Thread, {User, Tripcode, Body, File}) -> 
-    gen_server:call(Board, {reply, Thread, User, Tripcode, Body, File}).
+new_thread(Board, {User, Tripcode, Comment, Preview, File}) -> 
+    gen_server:call(Board, {new_thread, User, Tripcode, Comment, Preview, File}).
+reply(Board, Thread, {User, Tripcode, Body, Preview, File}) -> 
+    gen_server:call(Board, {reply, Thread, User, Tripcode, Body, Preview, File}).
 
 %%%%%%%%%%%%%%%%%%%% internal call handling
 %%%%%%%%%% read operations
@@ -155,21 +151,21 @@ handle_call({move_thread, ThreadRec, NewBoard}, _From, BoardName) ->
     New = ThreadRec#thread{board=NewBoard},
     db:atomic_insert(New),
     {reply, to_prop(New), BoardName};
-handle_call({new_thread, User, Tripcode, Body, File}, _From, BoardName) -> 
+handle_call({new_thread, User, Tripcode, Body, Preview, File}, _From, BoardName) -> 
     ThreadId = now(),
     CommId = now(),
     Trip = triphash(Tripcode),
-    Comment = #comment{id=CommId, thread=ThreadId, user=User, tripcode=Trip, body=Body, file=File},
+    Comment = #comment{id=CommId, thread=ThreadId, user=User, tripcode=Trip, body=Body, preview=Preview, file=File},
     Thread = #thread{id=ThreadId, board=BoardName, last_update=ThreadId, comment_count=1, 
 		     first_comment=to_prop(Comment)},
     db:atomic_insert([Thread, Comment]),
     {reply, to_prop(Thread), BoardName};
-handle_call({reply, ThreadId, User, Tripcode, Body, File}, _From, BoardName) -> 
+handle_call({reply, ThreadId, User, Tripcode, Body, Preview, File}, _From, BoardName) -> 
     Rec = find_thread(ThreadId),
     active = Rec#thread.status,
     Id = now(),
     Trip = triphash(Tripcode),
-    Comment = #comment{id=Id, thread=ThreadId, user=User, tripcode=Trip, body=Body, file=File},
+    Comment = #comment{id=Id, thread=ThreadId, user=User, tripcode=Trip, body=Body, preview=Preview, file=File},
     LastComm = last_n(Rec#thread.last_comments, to_prop(Comment), 4),
     Updated = Rec#thread{last_update=Id,
 			 comment_count=Rec#thread.comment_count + 1,
@@ -221,6 +217,12 @@ to_prop(Rec) when is_record(Rec, thread) ->
     common:rec_to_proplist(Rec, record_info(fields, thread));
 to_prop(Rec) when is_record(Rec, comment) ->
     common:rec_to_proplist(Rec, record_info(fields, comment)).
+
+exists_p(BoardName) -> 
+    case db:do(qlc:q([X#board.name || X <- mnesia:table(board), X#board.name =:= BoardName])) of
+	[] -> false;
+	_ -> true
+    end.
 
 %%%%%%%%%%%%%%%%%%%% DB-related
 create() -> 

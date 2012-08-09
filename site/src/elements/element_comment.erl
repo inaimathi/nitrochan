@@ -8,25 +8,16 @@ local(Target, Type, Postback) ->
 
 reflect() -> record_info(fields, comment).
 
+from_prop({summary, Proplist}) ->
+    #comment{summary=true, properties=Proplist};
 from_prop(Proplist) -> 
     #comment{properties=Proplist}.
 from_prop(_DefUser, Proplist) -> 
     #comment{properties=Proplist}.
 
-render_element(#comment{properties=Prop}) ->
+render_element(#comment{summary=Summary_p, properties=Prop}) ->
     case proplists:get_value(status, Prop) of
-	deleted ->
-	    Id = proplists:get_value(id, Prop),
-	    RevId = util:temp_id(),
-	    local(RevId, click, {revive_comment, Id}),
-	    #span {class=[comment, deleted], id=util:now_to_css_id(Id),
-		   body=[#span{ class=notice, text="Deleted" },
-			 #span{ class=comment_id, text=util:now_to_id_string(Id) },
-			 #span{ class=comment_datetime, text=util:now_to_datetime_string(Id) },
-			 #span{ show_if=util:board_permission_p(),
-				class=admin_links,
-				body=[ #link{id=RevId, text="Phoneix Down"} ]},
-			 #br{ class=clear }]};
+	deleted -> render_deleted(Prop);	    
 	_ -> [Id, File, T, Body, User] = util:get_values([id, file, tripcode, body, user], Prop),
 	     Trip = util:trip_to_string(T),
 	     Class = ".comment ." ++ Trip,
@@ -49,11 +40,27 @@ render_element(#comment{properties=Prop}) ->
 					#link{id=RevImgId, show_if=deleted_image_p(File), text="Phoneix Down, Image Edition"}]},
 			  #br{ class=clear },
 			  render_image(File),
-			  render_body(Body),
+			  render_body(case Summary_p of
+					  true -> [proplists:get_value(preview, Prop)];
+					  _ -> Body
+				      end),
 			  #br{ class=clear }]}
     end.
 
 %%%%%%%%%%%%%%%%%%%% component rendering
+render_deleted(Prop) ->
+    Id = proplists:get_value(id, Prop),
+    RevId = util:temp_id(),
+    local(RevId, click, {revive_comment, Id}),
+    #span {class=[comment, deleted], id=util:now_to_css_id(Id),
+	   body=[#span{ class=notice, text="Deleted" },
+		 #span{ class=comment_id, text=util:now_to_id_string(Id) },
+		 #span{ class=comment_datetime, text=util:now_to_datetime_string(Id) },
+		 #span{ show_if=util:board_permission_p(),
+			class=admin_links,
+			body=[ #link{id=RevId, text="Phoneix Down"} ]},
+		 #br{ class=clear }]}.
+
 render_user(registered, User) ->
     #span{ class=[username, registered], text=User };
 render_user(_, []) ->

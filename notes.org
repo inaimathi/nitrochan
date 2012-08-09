@@ -5,8 +5,7 @@
 ** external programs
    imagemagick
 
- Dos
-  
+* To Dos
 ** DONE should remember name and tripcode when starting a thread
    CLOSED: [2012-07-23 Mon 22:03]
    - CLOSING NOTE [2012-07-23 Mon 22:04] \\
