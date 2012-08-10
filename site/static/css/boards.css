@@ -13,8 +13,8 @@
 
 .thread { background-color: #ddf; margin-bottom: 15px; }
 .thread .thread_datetime { font-style: oblique; }
-.comment { display: block; background-color: #bbf; margin-bottom: 5px; padding: 5px; word-break: break-all; }
-.comment span { display: block; float: left; margin-right: 10px; padding: 0px; line-height: normal; }
+.comment { display: block; background-color: #bbf; margin-bottom: 5px; padding: 5px; word-break: break-all; line-height: 20px;}
+.comment span, .comment a.comment_id { display: block; float: left; margin-right: 10px; padding: 0px; line-height: normal; }
 .comment .username { font-weight: bold; }
 .comment .registered { color: #821010; }
 .comment .tripcode { width: 150px; overflow: hidden; word-break: normal; }

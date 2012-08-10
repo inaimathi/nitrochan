@@ -30,7 +30,7 @@ collect_tripcode() ->
 process_comment_body(Body) -> 
     StripFn = fun (Str, Reg) -> re:replace(Str, Reg, "", [{return, list}]) end,
     Stripped = StripFn(StripFn(Body, "^[\s\n]+"), "[\s\n]+$"),
-    [First | Rest] = re:split(Stripped, "\n", [{return, list}]),
+    [First | Rest] = re:split(Stripped, "({.*?})|\n", [{return, list}]),
     Preview = case {length(First), length(Rest)}  of
 		  {Chars, 0} when Chars =< 250 -> 
 		      [lists:sublist(First, 250)];
@@ -56,5 +56,5 @@ collect_comment(LocalFileName) ->
 	{_, _, _, _, true} -> {false, "Your tripcode can't be longer than 250 characters. Really, you're secure by like 132. Anything after that is wasted effort."};
 	_ -> wf:session(username, Username), wf:session(tripcode, util:q(txt_tripcode)),
  	     {Preview, FinalBody} = process_comment_body(Body),
-	     {Username, element_comment_form:collect_tripcode(), FinalBody, Preview, LocalFileName}
+	     {Username, element_comment_form:collect_tripcode(), FinalBody, Preview, [], LocalFileName}
     end.

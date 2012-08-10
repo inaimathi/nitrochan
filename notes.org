@@ -138,10 +138,6 @@
     CLOSED: [2012-08-07 Tue 02:54]
     - CLOSING NOTE [2012-08-07 Tue 02:55] \\
       Admins can now start new boards, though the interface and name of the relevant module is less than stellar
-*** TODO protect threads in some pre-emptive way. Not sure how yet, so no-op this one for now
-       - force captcha?
-       - force login?
-       - force posting delay?
 *** TODO set up user levels
     There should be 3;
        1. global mods -- server owner and people they choose. These guys have mod rights everywhere.
@@ -193,4 +189,12 @@
 ** TODO [#B] Change some of the event functions into actions
 ** TODO [#B] Create custom form element/behavior to avoid the event finangling with the default nitrogen upload
 ** TODO [#B] Add board-specific CSS option
-
+** TODO [#B] protect threads in some pre-emptive way. Not sure how yet, so no-op this one for now
+       - force captcha?
+       - force login?
+       - force posting delay?
+   ^-That all sounds annoying as fuck, and doesn't seem likely to deter people.
+       - admin only? (kind of defeats the purpose, though having separate admin-only threads sounds ok.
+	 maybe even limiting the admin board to administrators?)
+       - temporary posting locks?
+       - ip-based bans/redirects?

@@ -18,8 +18,9 @@ from_prop(_DefUser, Proplist) ->
 render_element(#comment{summary=Summary_p, properties=Prop}) ->
     case proplists:get_value(status, Prop) of
 	deleted -> render_deleted(Prop);	    
-	_ -> [Id, File, T, Body, User] = util:get_values([id, file, tripcode, body, user], Prop),
+	_ -> [Id, File, T, Body, User, Resp] = util:get_values([id, file, tripcode, body, user, responses], Prop),
 	     Trip = util:trip_to_string(T),
+	     IdString = util:now_to_id_string(Id),
 	     Class = ".comment ." ++ Trip,
 	     [DelId, DelImgId, RevImgId] = util:temp_id(3),
 	     local(DelId, click, {delete_comment, Id}),
@@ -31,7 +32,7 @@ render_element(#comment{summary=Summary_p, properties=Prop}) ->
 				 actions=#event{ target=Class, 
 						 type=mouseover, 
 						 actions=util:highlight()} },
-			  #span{ class=comment_id, text=util:now_to_id_string(Id) },
+			  #span{ class=comment_id, text=IdString }, #anchor{ name=IdString },
 			  #span{ class=comment_datetime, text=util:now_to_datetime_string(Id) },
 			  #span{ show_if=util:board_permission_p(),
 				 class=admin_links,
@@ -44,6 +45,12 @@ render_element(#comment{summary=Summary_p, properties=Prop}) ->
 			      true -> render_summary(proplists:get_value(preview, Prop));
 			      _ -> render_body(Body)
 			  end,
+			  #span{class=responses,
+				body=lists:map(fun (R) -> 
+						       IdString = util:now_to_id_string(R),
+						       #link{text=IdString, url=[35 | IdString]}
+					       end, Resp)},
+			  
 			  #br{ class=clear }]}
     end.
 
@@ -77,10 +84,10 @@ render_summary(Line) ->
 
 render_body([[]]) -> "";
 render_body(undefined) -> "";
-render_body(Body) -> 
-    lists:map(fun ([]) -> #br{};
-		  (P) -> #p{ text=P } 
-	      end, Body).
+render_body(Body) -> lists:map(fun render_body_component/1, Body).
+
+render_body_component([]) -> #br{};
+render_body_component(P) -> #literal{ text=P }.
 
 render_image(undefined) -> "";
 render_image(deleted) -> #span{ class=deleted_image, text="FILE DELETED" };

@@ -1,4 +1,6 @@
 %%% custom elements
+-record(anchor, {?ELEMENT_BASE(element_anchor), html_encode=true, text="", body="", name}).
+
 -record(comment_form, {?ELEMENT_BASE(element_comment_form)}).
 -record(comment, {?ELEMENT_BASE(element_comment), summary=false, properties}).
 -record(thread_summary, {?ELEMENT_BASE(element_thread_summary), properties}).

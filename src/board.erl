@@ -84,10 +84,10 @@ default_name(Board) ->
 get_thread(Thread) -> 
     #thread{ board=Board } = find_thread(Thread),
     gen_server:call(Board, {get_thread, Thread}).
-new_thread(Board, {User, Tripcode, Comment, Preview, File}) -> 
-    gen_server:call(Board, {new_thread, User, Tripcode, Comment, Preview, File}).
-reply(Board, Thread, {User, Tripcode, Body, Preview, File}) -> 
-    gen_server:call(Board, {reply, Thread, User, Tripcode, Body, Preview, File}).
+new_thread(Board, {User, Tripcode, Comment, Preview, RespondsTo, File}) -> 
+    gen_server:call(Board, {new_thread, User, Tripcode, Comment, Preview, RespondsTo, File}).
+reply(Board, Thread, {User, Tripcode, Body, Preview, RespondsTo, File}) -> 
+    gen_server:call(Board, {reply, Thread, User, Tripcode, Body, Preview, RespondsTo, File}).
 
 %%%%%%%%%%%%%%%%%%%% internal call handling
 %%%%%%%%%% read operations
@@ -151,7 +151,7 @@ handle_call({move_thread, ThreadRec, NewBoard}, _From, BoardName) ->
     New = ThreadRec#thread{board=NewBoard},
     db:atomic_insert(New),
     {reply, to_prop(New), BoardName};
-handle_call({new_thread, User, Tripcode, Body, Preview, File}, _From, BoardName) -> 
+handle_call({new_thread, User, Tripcode, Body, Preview, _RespondsTo, File}, _From, BoardName) -> 
     ThreadId = now(),
     CommId = now(),
     Trip = triphash(Tripcode),
@@ -160,7 +160,7 @@ handle_call({new_thread, User, Tripcode, Body, Preview, File}, _From, BoardName)
 		     first_comment=to_prop(Comment)},
     db:atomic_insert([Thread, Comment]),
     {reply, to_prop(Thread), BoardName};
-handle_call({reply, ThreadId, User, Tripcode, Body, Preview, File}, _From, BoardName) -> 
+handle_call({reply, ThreadId, User, Tripcode, Body, Preview, _RespondsTo, File}, _From, BoardName) -> 
     Rec = find_thread(ThreadId),
     active = Rec#thread.status,
     Id = now(),

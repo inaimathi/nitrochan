@@ -59,7 +59,7 @@ finish_upload_event(_Tag, _OriginalFilename, LocalFile, _Node) ->
 	     Big = filename:join(["site", "static", "images", "big", Filename]),
 	     Preview = filename:join(["site", "static", "images", "preview", Filename]),
 	     file:rename(LocalFile, Big),
-	     os:cmd(lists:append(["convert ", Big, "[0] -resize 250x250\\> ", Preview])),
+	     os:cmd(lists:append(["convert ", Big, "[0] -resize 125x125\\> ", Preview])),
 	     case element_comment_form:collect_comment(Filename) of
 		 {false, Reason} -> wf:flash(Reason);
 		 Comment -> post(Comment)
