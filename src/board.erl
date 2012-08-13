@@ -13,7 +13,7 @@
 -record(comment, {id, thread, status=active, user, tripcode, body, preview="", responses=[], file}).
 
 -export([new/1, new/2, new_thread/2, reply/3]).
--export([list/0, thread_meta/1, summarize/1, default_name/1, get_thread/1]).
+-export([list/0, thread_meta/1, filter/2, summarize/1, default_name/1, get_thread/1]).
 -export([move/2, delete/2, revive/2, purge/2]).
 
 -define(AUTH_NODE, 'erl_chan@127.0.1.1').
@@ -24,6 +24,8 @@ list() -> db:do(qlc:q([{X#board.name, X#board.description} || X <- mnesia:table(
 thread_meta(Id) ->
     #thread{board=Board, status=Stat, last_update=Last, comment_count=Count} = find_thread(Id),
     { Board, Stat, default_name(Board), Last, Count }.
+
+filter(Board, CommentIdList) -> gen_server:call(Board, {filter_responses, CommentIdList}).
      
 new(BoardName) when is_atom(BoardName) -> new(BoardName, "").
 new(BoardName, Description) when is_atom(BoardName) ->
@@ -105,6 +107,8 @@ handle_call({summarize, ThreadId}, _From, BoardName) ->
 handle_call({get_thread, Thread}, _From, BoardName) -> 
     Res = db:do(qlc:q([to_prop(X) || X <- mnesia:table(comment), X#comment.thread =:= Thread])),
     {reply, Res, BoardName};
+handle_call({filter_responses, ResponseList}, _From, BoardName) ->
+    {reply, filter_responses(ResponseList), BoardName};
 
 %%%%%%%%%% real delete operations
 handle_call({purge_thread, ThreadId}, _From, BoardName) ->
@@ -151,21 +155,25 @@ handle_call({move_thread, ThreadRec, NewBoard}, _From, BoardName) ->
     New = ThreadRec#thread{board=NewBoard},
     db:atomic_insert(New),
     {reply, to_prop(New), BoardName};
-handle_call({new_thread, User, Tripcode, Body, Preview, _RespondsTo, File}, _From, BoardName) -> 
+handle_call({new_thread, User, Tripcode, Body, Preview, RespondsTo, File}, _From, BoardName) -> 
     ThreadId = now(),
     CommId = now(),
     Trip = triphash(Tripcode),
-    Comment = #comment{id=CommId, thread=ThreadId, user=User, tripcode=Trip, body=Body, preview=Preview, file=File},
+    Comment = #comment{id=CommId, thread=ThreadId, user=User, tripcode=Trip, 
+		       body=Body, preview=Preview, responses=RespondsTo, 
+		       file=File},
     Thread = #thread{id=ThreadId, board=BoardName, last_update=ThreadId, comment_count=1, 
 		     first_comment=to_prop(Comment)},
     db:atomic_insert([Thread, Comment]),
     {reply, to_prop(Thread), BoardName};
-handle_call({reply, ThreadId, User, Tripcode, Body, Preview, _RespondsTo, File}, _From, BoardName) -> 
+handle_call({reply, ThreadId, User, Tripcode, Body, Preview, RespondsTo, File}, _From, BoardName) -> 
     Rec = find_thread(ThreadId),
     active = Rec#thread.status,
     Id = now(),
     Trip = triphash(Tripcode),
-    Comment = #comment{id=Id, thread=ThreadId, user=User, tripcode=Trip, body=Body, preview=Preview, file=File},
+    Comment = #comment{id=Id, thread=ThreadId, user=User, tripcode=Trip, 
+		       body=Body, preview=Preview, responses=RespondsTo,
+		       file=File},
     LastComm = last_n(Rec#thread.last_comments, to_prop(Comment), 4),
     Updated = Rec#thread{last_update=Id,
 			 comment_count=Rec#thread.comment_count + 1,
@@ -180,6 +188,15 @@ triphash(Tripcode) ->
     catch
 	error:_ -> Tripcode
     end.
+
+filter_responses(RespList) -> filter_responses(RespList, sets:new()).
+filter_responses([Id | Rest], Acc) ->
+    case find_comm(Id) of
+	false -> filter_responses(Rest, Acc);
+	#comment{thread=Thread} -> filter_responses(Rest, sets:add_element({Thread, Id}, Acc))
+    end;
+filter_responses([], Acc) ->
+    sets:to_list(Acc).
 
 purged_comment(Comment) ->
     NewFile = case Comment#comment.file of

@@ -105,7 +105,12 @@
    - CLOSING NOTE [2012-08-09 Thu 14:09] \\
      Done
 
-** TODO [#A] comment responses
+** DONE [#A] comment responses
+   CLOSED: [2012-08-12 Sun 21:56]
+   - CLOSING NOTE [2012-08-12 Sun 21:59] \\
+     Implemented complete backend of the responses.
+     new_thread and reply calls now accept ResponseTo (a list of {ThreadId, CommentId} to associate with the given comment)
+     board now exposes a filter/2 function which runs a given list of comments past the database, checking that each comment exists and that its uniquely recorded as a response
    When a new comment is posted, analyze all the comments it responds to and cache the link in those comments
    Max ten comments being referred to, only add a unique link (if someone puts in 30 links to the same comment,
    the effect should be a single link to that comment).
@@ -150,7 +155,10 @@
 	  can't start communities or moderate without an account.
 *** TODO set up user management frontend
     Draggable-based system to let mods organize their users in cool ways
-** TODO [#A] set up registration and login system
+** DONE [#A] set up registration and login system
+   CLOSED: [2012-08-13 Mon 01:25]
+   - CLOSING NOTE [2012-08-13 Mon 01:26] \\
+     Full registration process set up. Still need to put together the automated bits for RSA_auth, but that's a separate thing
    Mods aren't the only ones that can register.
    You should set up a registration system that all users can optionally participate in.
    If you're a logged in member, you shouldn't get a tripcode field; instead, the system should
@@ -177,9 +185,14 @@
     - CLOSING NOTE [2012-08-01 Wed 12:00] \\
       Added appropriate, contextually displayed links to the comment_form
     I'm thinking set up the posting form as a toolbar, and add this to that
-*** TODO set up RSA-key login system, see how it works and what components it needs
+*** DONE set up RSA-key login system, see how it works and what components it needs
+    CLOSED: [2012-08-13 Mon 01:25]
+    - CLOSING NOTE [2012-08-13 Mon 01:25] \\
+      After much blood, sweat and tears, it's done.
 ** TODO [#B] Comment markup components
 *** TODO Link to comment
+    These should be gathered up and used as response links.
+    See "comment responses" task for details on requirements.
 *** TODO Quote things
     Actually, pretty much the whole markdown system could stand to be incorporated.
 ** TODO [#B] Spoiler/NSFW image tags
