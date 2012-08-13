@@ -16,10 +16,13 @@ inner_body() ->
 	    [ #is_required {text="What, you're not even gonna guess?"}]}],
     util:validators(btn_login, Val),
     [
+     #crumbs{},
      #h1 { text="Log In" },
+     #link{text="Log in the secure way", url="/auth/rsa/manual"},
      #label { text="Username" }, #textbox { id=txt_username, next=txt_passphrase },
      #label { text="Passphrase" }, #password { id=txt_passphrase, next=btn_login }, #br{},
      #button { id=btn_login, text="Login", postback=login }
+     
     ].
 
 authenticate(_Tag, Value) ->

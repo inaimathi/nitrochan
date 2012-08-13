@@ -30,7 +30,6 @@ inner_body(Thread) ->
     wf:state(default_name, DefName),
     wf:state(board, Board), 
     wf:state(board_group, proplists:get_value(group, BoardMeta)),
-    erlang:display({wf:state(board_group), wf:session(admin_groups)}),
     [ 
       #crumbs{ board=atom_to_list(Board), thread=Thread },
       #thread_moderation{thread_id=wf:state(thread), status=Stat},

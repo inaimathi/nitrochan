@@ -20,6 +20,7 @@ inner_body() ->
 	   {txt_confirm, [#confirm_password {text="Passwords must match", password=txt_passphrase}]}],
     util:validators(btn_register, Val),
     [
+     #crumbs{},
      #h1 { text="Log In" },
      #label { text="Username" }, #textbox { id=txt_username, next=txt_passphrase },
      #label { text="Passphrase" }, #password { id=txt_passphrase, next=txt_confirm }, 

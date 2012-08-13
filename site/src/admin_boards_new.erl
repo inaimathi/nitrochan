@@ -1,4 +1,4 @@
--module(admin_boards).
+-module(admin_boards_new).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include_lib("records.hrl").
@@ -21,20 +21,21 @@ inner_body() ->
     wf:wire(btn_ok, txt_board_name, #validate {validators=[#is_required{ text="Required" }]}),
     wf:wire(btn_ok, #event{ type=click, postback=new_board}),
     [
-     #h1 { text="Board Administration" },
-     #hr{},
-     #textbox{ id=txt_board_name, next=txt_description }, #br{},
+     #crumbs{},
+     #h1 { text="New Board" },
+     #label{text="Board Name"},
+     #textbox{ id=txt_board_name, next=txt_description },
+     #label{text="Description"},
      #textarea{ id=txt_description }, #br{},
-     #button{ id=btn_ok, text="Ok" },
-     #hr{},
-     #board_list { extra_classes=[full_page]}
+     #button{ id=btn_ok, text="Ok" }
     ].
 
 event(new_board) ->
     [BoardName, Description] = util:q([txt_board_name, txt_description]),
     Res = rpc:call(?BOARD_NODE, board, new, [list_to_atom(BoardName), Description]),
+    erlang:display({Res, util:uri({board, BoardName})}),
     case Res of
-	{ok, Proc} -> wf:redirect(util:uri({board, BoardName}));
+	ok -> wf:redirect(util:uri({board, BoardName}));
 	_ -> false
     end;
 event(_) -> 

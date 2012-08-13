@@ -11,12 +11,14 @@ inner_body() ->
     Val = [{txt_username, [#is_required {text="You're definitely not ` `. I know that guy."}]}],
     util:validators(btn_send, Val),
     [
+     #crumbs{},
      #h1{ text="Manual RSA Log In"},
      #label {text="Username: "},
      #textbox { id=txt_username, next=btn_send },
      #button { id=btn_send, text="Request Secret", postback=send_user },
 
-     #panel { id=auth_token }
+     #panel { id=auth_token },
+     #link{text="Log in the dumb way", url="/auth/login"}
     ].
 
 event(send_user) ->

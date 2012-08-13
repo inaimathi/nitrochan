@@ -25,8 +25,8 @@
 .comment .omitted { font-size: small; font-style: oblique; }
 .clear { clear: both; }
 
-.thread .admin_links a, .thread .admin_links select { float:right; margin-right: 10px; }
-.thread .admin_links select { margin-top: 5px; }
+.admin_links a, .thread .admin_links select { float:right; margin-right: 10px; }
+.admin_links select { margin-top: 5px; }
 
 .comment .admin_links { float: right; }
 .comment .admin_links a { float: none; margin-right: 0px; }

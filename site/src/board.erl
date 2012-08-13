@@ -21,8 +21,7 @@ inner_body(Board) ->
     wf:state(board, list_to_atom(Board)),
     wf:comet_global(fun () -> post_loop() end, wf:state(board)),
     Threads =  rpc:call(?BOARD_NODE, board, summarize, [wf:state(board)]),
-    [ 
-      #crumbs{ board=Board },
+    [ #crumbs{ board=Board },
       #panel {id=messages, body=lists:map(fun element_thread_summary:from_prop/1, Threads)},
       #comment_form{}
     ].

@@ -21,6 +21,7 @@ inner_body() ->
     GroupList = rpc:call(?AUTH_NODE, groups, list, []),
     lists:map(fun insert_user/1, Users),
     [
+     #crumbs{},
      #h1 { text="User Administration" },
      #panel{class=group_box,
 	    body=[#label{text="Users"},

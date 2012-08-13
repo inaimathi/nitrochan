@@ -44,14 +44,18 @@ highlight() ->
 highlight(Target) ->
     #effect {target=Target, effect=highlight, speed=1000, options=[{color, "#00ff00"}]}.
 
-board_permission_p() ->
+admin_p() ->
     case {wf:user(), wf:role(admin)} of
-	{undefined, _} -> 
-	    false;
-	{_, true} -> 
-	    true;
-	_ -> 
-	    lists:member(wf:state(board_group), wf:session(admin_groups))
+	{undefined, _} -> false;
+	{_, true} -> true;
+	_ -> false
+    end.
+
+board_permission_p() ->
+    case {wf:user(), admin_p()} of
+	{undefined, _} -> false;
+	{_, true} -> true;
+	_ -> lists:member(wf:state(board_group), wf:session(admin_groups))
     end.
 
 state_change(Fn, Target) ->

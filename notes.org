@@ -208,8 +208,16 @@
    - Figure out a way to get temp ids generated in a way that doesn't suck balls
      (you should be able to dynamically insert/remove users, without doing page reloads of everything.
      That should be an absolute last resort)
-** TODO [#A] Put together an admin link bar so that administrators don't need to remember the admin pages
-** TODO [#A] Add links/re-prioritize login links
+** DONE [#A] Put together an admin link bar so that administrators don't need to remember the admin pages
+   CLOSED: [2012-08-13 Mon 15:10]
+   - CLOSING NOTE [2012-08-13 Mon 15:10] \\
+     -breadcrumb trail has been mildly reconfigured to display admin links for administrators
+     -#crumbs{} added to all existing pages
+** DONE [#A] Add links/re-prioritize login links
+   CLOSED: [2012-08-13 Mon 14:32]
+   - CLOSING NOTE [2012-08-13 Mon 14:33] \\
+     -The login page now has a link off to RSA authentication
+     -The RSA auth page has a link off to login
    - Add links to the RSA authentication system
    - Perhaps make it default, and make regular auth link off it?
 ** DONE [#A] Disallow logged in users from registering
@@ -238,3 +246,9 @@
 	 maybe even limiting the admin board to administrators?)
        - temporary posting locks?
        - ip-based bans/redirects?
+** TODO [#B] Add automatic RSA login with a browser plugin
+** TODO [#B] Add a profile page
+   From a profile page, users should be able to
+*** TODO Change password
+*** TODO Add/change RSA pubkey
+** TODO [#B] Add separate logging system to track deletions/shows/hides

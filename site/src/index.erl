@@ -12,6 +12,7 @@ body() ->
 
 inner_body() -> 
     [
+     #crumbs{},
      #h1 { text="Welcome to NitroChan" },
      #board_list{extra_classes=[full_page], big=true}
     ].
