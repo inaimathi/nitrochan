@@ -212,7 +212,10 @@
 ** TODO [#A] Add links/re-prioritize login links
    - Add links to the RSA authentication system
    - Perhaps make it default, and make regular auth link off it?
-** TODO [#A] Disallow logged in users from registering
+** DONE [#A] Disallow logged in users from registering
+   CLOSED: [2012-08-13 Mon 14:24]
+   - CLOSING NOTE [2012-08-13 Mon 14:25] \\
+     -If a user is logged in, the register page will now redirect them to /
 ** TODO [#B] Comment markup components
 *** TODO Link to comment
     These should be gathered up and used as response links.

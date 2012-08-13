@@ -5,7 +5,11 @@
 
 main() -> #template { file="./site/templates/bare.html" }.
 title() -> "Register".
-body() -> #container_12{body=[#grid_8{alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]}.
+body() -> 
+    case wf:user() of
+	undefined -> #container_12{body=[#grid_8{alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]};
+	_ -> wf:redirect("/")
+    end.
 
 inner_body() -> 
     Val = [{txt_username, [#is_required {text="Required"},
