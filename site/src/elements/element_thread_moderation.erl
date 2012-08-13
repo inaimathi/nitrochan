@@ -14,8 +14,11 @@ render_element(#thread_moderation{thread_id=Thread, status=active}) ->
     local(MovId, change, {move_thread, Thread, MovId}),
     render_block([#link{id=DelId, text="Delete Thread"},
 		  #dropdown{id=MovId, 
-			    options=lists:map(fun({O, _Desc}) -> #option { text=O, value=O } end,
-					      [{"Move Thread", none} | rpc:call(?BOARD_NODE, board, list, [])])}]);
+			    options=[#option { text="Move Thread", value=false } |
+				     lists:map(fun (Board) -> 
+						       BoardName = proplists:get_value(name, Board),
+						       #option { text=BoardName, value=BoardName } 
+					       end, rpc:call(?BOARD_NODE, board, list, []))]}]);
 render_element(#thread_moderation{thread_id=Thread, status=deleted}) ->
     RevId = util:temp_id(),
     local(RevId, click, {revive_thread, Thread}),

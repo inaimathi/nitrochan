@@ -12,7 +12,7 @@ start_link(Args) ->
 init([]) ->
     Children = 
 	try
-	    lists:map(fun ({B, _Desc}) -> child_spec(B) end, board:list())
+	    lists:map(fun (B) -> child_spec(proplists:get_value(name, B)) end, board:list())
 	catch
 	    error:_ -> []
 	end,

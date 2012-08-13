@@ -24,12 +24,17 @@ inner_body(Thread) ->
     wf:state(thread, util:id_string_to_now(Thread)),
     wf:comet_global(fun () -> post_loop() end, wf:state(thread)),
     Comments = rpc:call(?BOARD_NODE, board, get_thread, [wf:state(thread)]),
-    {Board, Stat, DefName, _, _} = rpc:call(?BOARD_NODE, board, thread_meta, [wf:state(thread)]),
-    wf:state(board, Board),
+    ThreadMeta = rpc:call(?BOARD_NODE, board, thread_meta, [wf:state(thread)]),
+    [Board, Stat, DefName] = util:get_values([board, status, default_name], ThreadMeta),
+    BoardMeta = rpc:call(?BOARD_NODE, board, board_meta, [Board]),
+    wf:state(default_name, DefName),
+    wf:state(board, Board), 
+    wf:state(board_group, proplists:get_value(group, BoardMeta)),
+    erlang:display({wf:state(board_group), wf:session(admin_groups)}),
     [ 
       #crumbs{ board=atom_to_list(Board), thread=Thread },
       #thread_moderation{thread_id=wf:state(thread), status=Stat},
-      #panel {id=messages, body=lists:map(fun (T) -> element_comment:from_prop(DefName, T) end, Comments)},
+      #panel {id=messages, body=lists:map(fun element_comment:from_prop/1, Comments)},
       #comment_form{}
     ].
 

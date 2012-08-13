@@ -51,7 +51,7 @@ board_permission_p() ->
 	{_, true} -> 
 	    true;
 	_ -> 
-	    lists:member(wf:state(board), wf:session(admin_groups))
+	    lists:member(wf:state(board_group), wf:session(admin_groups))
     end.
 
 state_change(Fn, Target) ->
@@ -72,6 +72,9 @@ trip_to_string(Tripcode) ->
 	error:_ -> ""
     end.
 
+to_group_id(Id) when is_atom(Id) -> Id;
+to_group_id(Id) -> now_to_css_id(Id).
+    
 now_to_thread_id(Now) -> now_to_string(Now, "thread", "").
 now_to_id_string(Now) -> now_to_string(Now, "", ".").
 now_to_css_id(Now) -> now_to_string(Now, "", "").

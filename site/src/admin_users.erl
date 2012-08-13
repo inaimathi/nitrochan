@@ -27,24 +27,26 @@ inner_body() ->
 		  #textbox{id=filter, postback=filter},
 		  #panel{class=group_block, 
 			 body=lists:map(fun ({_, Username, _}) -> 
-					       #draggable{body=[Username], 
-							  tag=Username, class=user_draggable, 
-							  clone=true, revert=false}
-				       end, Users)}]},
+						#draggable{body=[Username], 
+							   tag=Username, class=user_draggable, 
+							   clone=true, revert=false}
+					end, Users)}]},
      lists:map(fun ({group, Id, Groupname, _, _, _}) ->
+		       CssId = util:to_group_id(Id),
 		       #panel{class=group_box,
 			      body=[#label{text=Groupname},
-				    #droppable{id=Id, tag=Id, class=group_block, body=[]}]}
+				    #droppable{id=CssId, tag=Id, class=group_block, body=[]}]}
 	       end, GroupList)
     ].
 
 insert_to_group({GroupId, Username}) ->
     Id = wf:temp_id(),
+    CssId = util:to_group_id(GroupId),
     RemLink = #link{show_if=(wf:user() /= Username), 
 		    text="[ - ]", 
 		    class=remove_link, 
 		    postback={remove, Id, GroupId, Username}},
-    wf:insert_bottom(GroupId, [#span{id=Id, body=[Username, RemLink]}, #br{}]).
+    wf:insert_bottom(CssId, [#span{id=Id, body=[Username, RemLink]}, #br{}]).
 
 insert_user({_, Username, Groups}) ->
     lists:map(fun (Id) -> insert_to_group({Id, Username}) end, Groups).

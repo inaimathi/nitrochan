@@ -8,34 +8,28 @@
 
 -export([create/0]).
 
--record(board, {name, description, created, max_threads=300, max_thread_size=500, default_name="Anonymous"}).
+-record(board, {name, description, created, group,
+		max_threads=300, max_thread_size=500, default_name="Anonymous"}).
 -record(thread, {id, board, status=active, last_update, first_comment, last_comments=[], comment_count}).
 -record(comment, {id, thread, status=active, user, tripcode, body, preview="", responses=[], file}).
 
--export([new/1, new/2, new_thread/2, reply/3]).
--export([list/0, thread_meta/1, filter/2, summarize/1, default_name/1, get_thread/1]).
+-export([new/1, new/2, new_special/2, new_thread/2, reply/3]).
+-export([list/0, thread_meta/1, board_meta/1, filter/2, summarize/1, get_thread/1]).
 -export([move/2, delete/2, revive/2, purge/2]).
 
 -define(AUTH_NODE, 'erl_chan@127.0.1.1').
 
 %%%%%%%%%%%%%%%%%%%% external API
-list() -> db:do(qlc:q([{X#board.name, X#board.description} || X <- mnesia:table(board)])).
-
-thread_meta(Id) ->
-    #thread{board=Board, status=Stat, last_update=Last, comment_count=Count} = find_thread(Id),
-    { Board, Stat, default_name(Board), Last, Count }.
+list() -> db:do(qlc:q([to_prop(X) || X <- mnesia:table(board)])).
 
 filter(Board, CommentIdList) -> gen_server:call(Board, {filter_responses, CommentIdList}).
-     
-new(BoardName) when is_atom(BoardName) -> new(BoardName, "").
+
+new(BoardName) when is_atom(BoardName) -> 
+    new(BoardName, "").
 new(BoardName, Description) when is_atom(BoardName) ->
-    case exists_p(BoardName) of
-	true -> already_exists;
-	false -> rpc:call(?AUTH_NODE, groups, add_special, [BoardName, atom_to_list(BoardName) ++ " board moderators"]),
-		 db:atomic_insert(#board{name=BoardName, description=Description, created=now()}),
-		 supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName)),
-		 ok
-    end.
+    push_board(BoardName, Description, add).
+new_special(BoardName, Description) when is_atom(BoardName) ->
+    push_board(BoardName, Description, add_special).
 
 move(Thread, NewBoard) ->
     Rec = find_thread(Thread),
@@ -74,9 +68,11 @@ summarize({Board, ThreadId}) ->
 summarize(Board) -> 
     gen_server:call(Board, summarize).
 
-default_name(Board) -> 
-    [Res] = db:do(qlc:q([X#board.default_name || X <- mnesia:table(board), X#board.name =:= Board])),
-    Res.
+board_meta(Name) -> 
+    to_prop(find_board(Name)).
+thread_meta(Id) -> 
+    to_prop(find_thread(Id)).
+
 get_thread(Thread) -> 
     #thread{ board=Board } = find_thread(Thread),
     gen_server:call(Board, {get_thread, Thread}).
@@ -227,7 +223,10 @@ collect_files([Comment | Rest], Acc) ->
 to_prop(Rec) when is_record(Rec, thread) -> 
     common:rec_to_proplist(Rec, record_info(fields, thread));
 to_prop(Rec) when is_record(Rec, comment) ->
-    common:rec_to_proplist(Rec, record_info(fields, comment)).
+    common:rec_to_proplist(Rec, record_info(fields, comment));
+to_prop(Rec) when is_record(Rec, board) ->
+    common:rec_to_proplist(Rec, record_info(fields, board)).
+
 
 exists_p(BoardName) -> 
     case db:do(qlc:q([X#board.name || X <- mnesia:table(board), X#board.name =:= BoardName])) of
@@ -236,14 +235,29 @@ exists_p(BoardName) ->
     end.
 
 %%%%%%%%%%%%%%%%%%%% DB-related
+push_board(BoardName, Description, GroupFn) when is_atom(BoardName) ->
+    case exists_p(BoardName) of
+	true -> already_exists;
+	false -> Id = rpc:call(?AUTH_NODE, groups, GroupFn, 
+			       case GroupFn of
+				   add -> [BoardName];
+				   add_special -> [BoardName, Description]
+			       end),
+		 db:atomic_insert(#board{name=BoardName, description=Description, created=now(), group=Id}),
+		 supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName)),
+		 ok
+    end.
+
 create() -> 
     mnesia:create_table(board, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, board)}]),
     mnesia:create_table(thread, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, thread)}]),
     mnesia:create_table(comment, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, comment)}]),
-    new(admin).
+    new_special(admin, "System administrators"),
+    new(general, "General discussion of all topics").
 
 find_thread(Id) -> db:find(thread, #thread.id, Id).
 find_comm(Id) -> db:find(comment, #comment.id, Id).
+find_board(Name) -> db:find(board, #board.name, Name).
 
 %%%%%%%%%%%%%%%%%%%% generic actions
 start(BoardName) -> gen_server:start_link({local, BoardName}, ?MODULE, BoardName, []).

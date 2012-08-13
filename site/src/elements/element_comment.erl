@@ -12,8 +12,6 @@ from_prop({summary, Proplist}) ->
     #comment{summary=true, properties=Proplist};
 from_prop(Proplist) -> 
     #comment{properties=Proplist}.
-from_prop(_DefUser, Proplist) -> 
-    #comment{properties=Proplist}.
 
 render_element(#comment{summary=Summary_p, properties=Prop}) ->
     case proplists:get_value(status, Prop) of
@@ -71,7 +69,7 @@ render_deleted(Prop) ->
 render_user(registered, User) ->
     #span{ class=[username, registered], text=User };
 render_user(_, []) ->
-    #span{ class=username, text=rpc:call(?BOARD_NODE, board, default_name, [wf:state(board)]) };
+    #span{ class=username, text=wf:state(default_name) };
 render_user(_, User) ->
     #span{ class=username, text=User }.
 

@@ -198,7 +198,12 @@
     CLOSED: [2012-08-13 Mon 01:25]
     - CLOSING NOTE [2012-08-13 Mon 01:25] \\
       After much blood, sweat and tears, it's done.
-** TODO [#A] BUG! odd things happen when you try to manage users in a board with non-alpha characters in the name
+** DONE [#A] BUG! odd things happen when you try to manage users in a board with non-alpha characters in the name
+   CLOSED: [2012-08-13 Mon 13:46]
+   - CLOSING NOTE [2012-08-13 Mon 13:47] \\
+     -Group IDs are no longer based on board names (so spaces don't aggravate this)
+     -Special boards are still subject to this, so they should be all lowercase with no spaces
+     -See about treating special boards the same way as regular boards (which should remove even that restriction)
    - Either fix it up so that the group id is a CSS-ID friendly string, or
    - Figure out a way to get temp ids generated in a way that doesn't suck balls
      (you should be able to dynamically insert/remove users, without doing page reloads of everything.
