@@ -10,7 +10,7 @@ erl_start = -eval 'lists:map(fun (App) -> application:load(App), application:sta
 erl_stop = -s init stop
 
 define mnesia_create
-	$(ERL) -name $(1) -eval 'mnesia:create_schema([node()]).' $(erl_start) -eval 'board:create(), users:create(), groups:create(), rsa_auth:create().' $(erl_stop)
+	$(ERL) -name $(1) -eval 'mnesia:create_schema([node()]).' $(erl_start) -eval 'users:create(), groups:create(), board:create(), rsa_auth:create().' $(erl_stop)
 endef
 
 ### Rules

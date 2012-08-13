@@ -36,10 +36,9 @@ valid_pubkey(_) -> true.
 event(register) ->
     [User, Pass, PubKey] = util:q([txt_username, txt_passphrase, txt_pubkey]),
     {Id, _, _} = rpc:call(?AUTH_NODE, users, register, [User, Pass]),
-    erlang:display(Id),
     case valid_pubkey(PubKey) of
-	true -> Res = rpc:call(?AUTH_NODE, rsa_auth, new_key, [Id, PubKey]),
-		erlang:display(Res)
+	true -> Res = rpc:call(?AUTH_NODE, rsa_auth, new_key, [Id, PubKey]);
+	_ -> no_key
     end,
     wf:session(admin_groups, []),
     wf:user(User),

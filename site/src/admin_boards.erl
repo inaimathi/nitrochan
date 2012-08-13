@@ -26,7 +26,6 @@ inner_body() ->
      #textbox{ id=txt_board_name, next=txt_description }, #br{},
      #textarea{ id=txt_description }, #br{},
      #button{ id=btn_ok, text="Ok" },
-     "Form goes here",
      #hr{},
      #board_list { extra_classes=[full_page]}
     ].

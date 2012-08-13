@@ -32,8 +32,6 @@ event(send_signed) ->
     Args = [wf:q(txt_username), wf:peer_ip(), 
             re:replace(wf:q(txt_auth_response), "\\\\n", "\n", [global, {return, list}])],
     Res = rpc:call(?AUTH_NODE, rsa_auth, verify, Args),
-    erlang:display(Res),
-    erlang:display(Args),
     case Res of
         {_Id, User, Groups} -> wf:session(admin_groups, Groups),
 			       wf:user(User),

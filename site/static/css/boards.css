@@ -36,3 +36,7 @@
 .deleted .notice { font-weight: bolder; margin-right: 10px; }
 
 .rsa_token {font-size: small; line-height: normal; background-color: #eee; font-family: mono; display: block; }
+
+.group_box { width: 200px; float: left; margin-right: 10px; }
+.group_block { border: 1px solid #ddd; padding: 10px; background-color: #eee; }
+.remove_link { margin-left: 10px; }

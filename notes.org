@@ -114,7 +114,10 @@
    When a new comment is posted, analyze all the comments it responds to and cache the link in those comments
    Max ten comments being referred to, only add a unique link (if someone puts in 30 links to the same comment,
    the effect should be a single link to that comment).
-** TODO [#A] Hook up auth and set up a moderation system
+** DONE [#A] Hook up auth and set up a moderation system
+   CLOSED: [2012-08-13 Mon 03:41]
+   - CLOSING NOTE [2012-08-13 Mon 03:41] \\
+     Done!
    Mods should be able to 
 *** DONE delete pictures
     CLOSED: [2012-08-01 Wed 18:05]
@@ -143,7 +146,10 @@
     CLOSED: [2012-08-07 Tue 02:54]
     - CLOSING NOTE [2012-08-07 Tue 02:55] \\
       Admins can now start new boards, though the interface and name of the relevant module is less than stellar
-*** TODO set up user levels
+*** DONE set up user levels
+    CLOSED: [2012-08-13 Mon 01:39]
+    - CLOSING NOTE [2012-08-13 Mon 01:39] \\
+      Done. There are per-board moderators, and moderators of the admin board can moderate globally.
     There should be 3;
        1. global mods -- server owner and people they choose. These guys have mod rights everywhere.
        2. users -- people with registered accounts. They may be mods on certain boards 
@@ -153,7 +159,10 @@
 	  Log their actions mercilessly.
        3. anons -- people without registered accounts. No tracking at all of these guys, though they
 	  can't start communities or moderate without an account.
-*** TODO set up user management frontend
+*** DONE set up user management frontend
+    CLOSED: [2012-08-13 Mon 03:41]
+    - CLOSING NOTE [2012-08-13 Mon 03:41] \\
+      Done!
     Draggable-based system to let mods organize their users in cool ways
 ** DONE [#A] set up registration and login system
    CLOSED: [2012-08-13 Mon 01:25]
@@ -185,10 +194,20 @@
     - CLOSING NOTE [2012-08-01 Wed 12:00] \\
       Added appropriate, contextually displayed links to the comment_form
     I'm thinking set up the posting form as a toolbar, and add this to that
-*** DONE set up RSA-key login system, see how it works and what components it needs
+*** set up RSA-key login system, see how it works and what components it needs
     CLOSED: [2012-08-13 Mon 01:25]
     - CLOSING NOTE [2012-08-13 Mon 01:25] \\
       After much blood, sweat and tears, it's done.
+** TODO [#A] BUG! odd things happen when you try to manage users in a board with non-alpha characters in the name
+   - Either fix it up so that the group id is a CSS-ID friendly string, or
+   - Figure out a way to get temp ids generated in a way that doesn't suck balls
+     (you should be able to dynamically insert/remove users, without doing page reloads of everything.
+     That should be an absolute last resort)
+** TODO [#A] Put together an admin link bar so that administrators don't need to remember the admin pages
+** TODO [#A] Add links/re-prioritize login links
+   - Add links to the RSA authentication system
+   - Perhaps make it default, and make regular auth link off it?
+** TODO [#A] Disallow logged in users from registering
 ** TODO [#B] Comment markup components
 *** TODO Link to comment
     These should be gathered up and used as response links.

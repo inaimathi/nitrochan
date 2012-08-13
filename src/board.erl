@@ -31,13 +31,7 @@ new(BoardName) when is_atom(BoardName) -> new(BoardName, "").
 new(BoardName, Description) when is_atom(BoardName) ->
     case exists_p(BoardName) of
 	true -> already_exists;
-	false -> try
-		     %% in a try block because the auth node may not exist. Intentionally.
-		     %% IF it does, we want a group with the same name as our board
-		     rpc:call(?AUTH_NODE, groups, add_special, [BoardName, atom_to_list(BoardName) ++ " board moderators"])
-		 catch
-		     error:_ -> false
-		 end,
+	false -> rpc:call(?AUTH_NODE, groups, add_special, [BoardName, atom_to_list(BoardName) ++ " board moderators"]),
 		 db:atomic_insert(#board{name=BoardName, description=Description, created=now()}),
 		 supervisor:start_child(erl_chan_sup, erl_chan_sup:child_spec(BoardName)),
 		 ok
