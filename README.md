@@ -13,7 +13,7 @@ Build a fairly simple-to-deploy, robust, scalable and secure anonymous image boa
 - per-board custom CSS
 - moderation audit system
 
-See notes.org for a complete TODO list so far.
+See notes.org for a complete TODO list so far. Also, feel free to contribute.
 
 ## Usage
 
@@ -83,3 +83,29 @@ This is a function meant to filter incoming comment responses. It takes a list o
     move/2, delete/2, revive/2, purge/2
     
 `move/2` moves a thread to a new board. `delete/2` hides a given thread/comment/image, `revive/2` undoes the effects of a `delete/2`. `purge/2` does an actual deletion, removing the target thread/comment/image from the database entirely (in each case, it returns a list of image files associated with the database elements so that the front-end can delete them from disk).
+
+## License
+
+This program is released for general consumption under the AGPL3. The full license text can be found in LICENSE.txt or at [the GNU license page](http://www.gnu.org/licenses/agpl.html)
+
+    Copyright © 2012  Inaimathi
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Short version (totally not legally binding, read the full document for the legalese, this is just for your understanding):
+
+- You may use this free of charge, with no warrany, in any way you please
+- If you distribute it or a derivative work, you must grant all your users the same freedoms (along with the source code)
+- If you set it or a derivative work up as a web service, you must grant all your users the same freedoms (along with the source code)
+- Any code you add to this project must be licensed under the AGPL3, or a compatible license
