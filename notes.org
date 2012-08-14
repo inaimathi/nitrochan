@@ -1,10 +1,4 @@
 
-* Dependencies
-** erlang modules
-   erlsha2 common auth
-** external programs
-   imagemagick
-
 * To Dos
 ** DONE should remember name and tripcode when starting a thread
    CLOSED: [2012-07-23 Mon 22:03]
@@ -248,6 +242,7 @@
        - ip-based bans/redirects?
 ** TODO [#B] Add automatic RSA login with a browser plugin
 ** TODO [#B] Add a profile page
+   NOTE: To be fair, the boad is meant to encourage anonymity 
    From a profile page, users should be able to
 *** TODO Change password
 *** TODO Add/change RSA pubkey

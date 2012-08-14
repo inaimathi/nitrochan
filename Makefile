@@ -20,8 +20,11 @@ all:
 	cp src/*app ebin/
 
 install:
-	apt-get install screen erlang libmagickwand-dev python-setuptools
+	apt-get install screen erlang python-setuptools imagemagick git
 	easy_install erlport
+	git clone git://github.com/nitrogen/nitrogen.git
+	cd nitrogen; make rel_yaws; cd ..
+	make push-site
 
 mnesia-create:
 	$(call mnesia_create, erl_chan@127.0.1.1)
@@ -33,6 +36,9 @@ mnesia-recreate: mnesia-delete mnesia-create
 
 pull-site:
 	rsync -rv --progress --exclude static/images nitrogen/rel/nitrogen/site/* site
+
+push-site:
+	rsync -rv --progress site/* nitrogen/rel/nitrogen/site
 
 start: start-chan start-nitro
 
