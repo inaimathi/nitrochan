@@ -20,6 +20,7 @@ inner_body() ->
 	   {txt_confirm, [#confirm_password {text="Passwords must match", password=txt_passphrase}]},
 	   {txt_pubkey, [#custom { text="Either leave it blank, or gimme a valid RSA Public Key.",
 				   function=fun valid_pubkey/2}]}],
+    Pub = rpc:call(?AUTH_NODE, rsa_auth, get_key, []),
     util:validators(btn_register, Val),
     [
      #crumbs{},
@@ -28,7 +29,9 @@ inner_body() ->
      #label { text="Passphrase" }, #password { id=txt_passphrase, next=txt_confirm }, 
      #label { text="Confirm Passphrase" }, #password { id=txt_confirm, next=txt_pubkey },
      #label { text="Public Key (optional)" }, #textarea { id=txt_pubkey }, #br{},
-     #button { id=btn_register, text="Register", postback=register }
+     #button { id=btn_register, text="Register", postback=register },
+     #label { text="Server Public Key" },
+     #span { class=rsa_token, text=Pub }
     ].
 
 unique_name_p(_Tag, Value) ->

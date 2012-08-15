@@ -35,7 +35,7 @@
 .deleted { background-color: #fbb; }
 .deleted .notice { font-weight: bolder; margin-right: 10px; }
 
-.rsa_token {font-size: small; line-height: normal; background-color: #eee; font-family: mono; display: block; }
+.rsa_token {font-size: small; line-height: normal; background-color: #eee; font-family: mono; display: block; padding: 10px; }
 
 .users_box { width: 180px; float: left; margin-right: 10px; }
 .users_box .group_block { min-height: 400px; }
