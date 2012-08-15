@@ -227,7 +227,10 @@
 ** TODO [#B] Spoiler/NSFW image tags
 ** TODO [#B] Stickied threads
 *** TODO Make threads stickiable
+    - stickied is a new thread field (true or false), or stickied is a new thread status (in addition to active|deleted|archived)
+    - in a thread summary, stickied threads get sorted above other threads (separate element too, so that new threads get displayed under the stickieds)
 *** TODO Allow moderators to sticky threads
+    - new option as part of the admin links in threads/thread summaries (sticky/unsticky)
 ** TODO [#B] Change some of the event functions into actions
 ** TODO [#B] Create custom form element/behavior to avoid the event finangling with the default nitrogen upload
 ** TODO [#B] Add board-specific CSS option

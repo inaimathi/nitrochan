@@ -10,14 +10,17 @@ start_link(Args) ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, Args).
 
 init([]) ->
-    Children = 
-	try
-	    lists:map(fun (B) -> child_spec(proplists:get_value(name, B)) end, board:list())
-	catch
-	    error:_ -> []
-	end,
+    Boards = try
+		 lists:map(
+		   fun (B) -> 
+			   child_spec(proplists:get_value(name, B)) 
+		   end, board:list())
+	     catch
+		 error:_ -> []
+	     end,
     {ok, {{one_for_one, 3, 10}, 
-	  Children}}.
+	  [{mod_log, {mod_log, start, []}, permanent, 5000, worker, [mod_log]}
+	    | Boards]}}.
 
 child_spec(BoardName) -> 
     {BoardName, {board, start, [BoardName]}, permanent, 5000, worker, [board]}.
