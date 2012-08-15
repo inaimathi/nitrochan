@@ -29,11 +29,11 @@ Nitrochan depends on
 - [Python 2.x](http://www.python.org/download/releases/2.7.2/)
 - [imagemagick](http://www.imagemagick.org/script/index.php)
 - [git](http://git-scm.com/)
+- [Erlport](http://erlport.org/)
 
 ###### Libraries
 
 - [Nitrogen](http://nitrogenproject.com/)
-- [Erlport](http://erlport.org/)
 - [auth](https://github.com/Inaimathi/auth)
 - [common](https://github.com/Inaimathi/common)
 - [erlsha2](https://github.com/vinoski/erlsha2)
@@ -41,13 +41,11 @@ Nitrochan depends on
 
 #### Installation
 
-If you've got GNU make installed, just run
+If you've got GNU make and `git` installed, just run
 
-    sudo make install
+    make install
     make mnesia-create
     
-Note that `make install` will attempt to install all of the above program dependencies in a Debian-specific way. If you're on a different distro, you'll need to tweak that rule to use your package manager. If you're on OS X or (god help you) Windows, good luck. You can probably still use the `install:` rule to help you out, and if you actually get it working drop me aline, but you're pretty much on your own.
-
 Starting the application shoulr be fairly simple once its been installed; just run
 
     make start
