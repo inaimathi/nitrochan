@@ -241,9 +241,15 @@
        - temporary posting locks?
        - ip-based bans/redirects?
 ** TODO [#B] Add automatic RSA login with a browser plugin
-** TODO [#B] Add a profile page
+** DONE [#B] Add a profile page
+   CLOSED: [2012-08-14 Tue 23:08]
+   - CLOSING NOTE [2012-08-14 Tue 23:08]
    NOTE: To be fair, the boad is meant to encourage anonymity 
    From a profile page, users should be able to
-*** TODO Change password
-*** TODO Add/change RSA pubkey
+*** DONE Change password
+    CLOSED: [2012-08-14 Tue 23:07]
+    - CLOSING NOTE [2012-08-14 Tue 23:07]
+*** DONE Add/change RSA pubkey
+    CLOSED: [2012-08-14 Tue 23:08]
+    - CLOSING NOTE [2012-08-14 Tue 23:08]
 ** TODO [#B] Add separate logging system to track deletions/shows/hides

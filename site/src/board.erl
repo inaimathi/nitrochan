@@ -5,7 +5,9 @@
 
 main() -> #template { file="./site/templates/bare.html" }.
 
-title() -> "Board".
+title() -> 
+    [Board | _] = re:split(wf:path_info(), "/", [{return, list}]),
+    Board.
 
 body() ->
     #container_12 { 
