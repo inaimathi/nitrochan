@@ -8,7 +8,7 @@ title() -> "Manual RSA Login".
 body() -> 
     case wf:user() of
 	undefined -> #container_12{body=[#grid_8{alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]};
-	_ -> wf:redirect_from_login(wf:header(referer))
+	_ -> wf:redirect_from_login("/")
     end.
 
 inner_body() -> 

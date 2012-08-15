@@ -8,7 +8,7 @@ title() -> "Register".
 body() -> 
     case wf:user() of
 	undefined -> #container_12{body=[#grid_8{alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]};
-	_ -> wf:redirect(wf:header(referer))
+	_ -> wf:redirect("/")
     end.
 
 inner_body() -> 
@@ -24,7 +24,8 @@ inner_body() ->
     util:validators(btn_register, Val),
     [
      #crumbs{},
-     #h1 { text="Log In" },
+     #h1 { text="Register" },
+     #p{text="Not that you need to. In fact, you probably shouldn't."},
      #label { text="Username" }, #textbox { id=txt_username, next=txt_passphrase },
      #label { text="Passphrase" }, #password { id=txt_passphrase, next=txt_confirm }, 
      #label { text="Confirm Passphrase" }, #password { id=txt_confirm, next=txt_pubkey },

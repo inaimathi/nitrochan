@@ -20,7 +20,6 @@ inner_body() ->
     util:validators(btn_change_pass, PassVal),
     util:validators(btn_change_key, KeyVal),
     Pubkey = rpc:call(?AUTH_NODE, rsa_auth, get_key, [wf:session(user_id)]),
-    erlang:display(Pubkey),
     [
      #crumbs{},
      #h1 { text="User Profile" },
