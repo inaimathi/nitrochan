@@ -23,7 +23,7 @@ Nitrochan depends on
 
 ###### Programs
 
-- **[GNU Make](http://www.gnu.org/software/make/)** (if you have this, the `Makefile` will do the rest for you)
+- [GNU Make](http://www.gnu.org/software/make/)
 - [Erlang](http://www.erlang.org/)
 - [GNU Screen](http://www.gnu.org/software/screen/)
 - [Python 2.x](http://www.python.org/download/releases/2.7.2/)
