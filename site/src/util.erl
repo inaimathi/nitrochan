@@ -44,6 +44,15 @@ highlight() ->
 highlight(Target) ->
     #effect {target=Target, effect=highlight, speed=1000, options=[{color, "#00ff00"}]}.
 
+populate_session(Id, Username, Groups) ->
+    wf:session(user_id, Id),
+    wf:session(admin_groups, Groups),
+    wf:user(Username),
+    case lists:member(admin, Groups) of
+	true -> wf:role(admin, true);
+	_ -> false
+    end.    
+
 admin_p() ->
     case {wf:user(), wf:role(admin)} of
 	{undefined, _} -> false;

@@ -5,7 +5,11 @@
 
 main() -> #template { file="./site/templates/bare.html" }.
 title() -> "Login".
-body() -> #container_12{body=[#grid_8 { alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]}.
+body() -> 
+    case wf:user() of
+	undefined -> #container_12{body=[#grid_8{alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]};
+	_ -> wf:redirect_from_login(wf:header(referer))
+    end.
 
 inner_body() -> 
     Val = [{txt_username,
@@ -27,13 +31,8 @@ inner_body() ->
 
 authenticate(_Tag, Value) ->
     case rpc:call(?AUTH_NODE, users, auth, [Value, util:q(txt_passphrase)]) of
-	{_Id, User, Groups} -> 
-	    wf:session(admin_groups, Groups),
-	    wf:user(User),
-	    case lists:member(admin, Groups) of
-		true -> wf:role(admin, true);
-		_ -> false
-	    end,
+	{Id, User, Groups} -> 
+	    util:populate_session(Id, User, Groups),
 	    true;
 	_ -> false
     end.

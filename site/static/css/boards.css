@@ -37,6 +37,11 @@
 
 .rsa_token {font-size: small; line-height: normal; background-color: #eee; font-family: mono; display: block; }
 
-.group_box { width: 200px; float: left; margin-right: 10px; }
+.users_box { width: 180px; float: left; margin-right: 10px; }
+.users_box .group_block { min-height: 400px; }
+.group_box { width: 190px; float: right; margin-left: 10px; }
+.group_box .group_block { min-height: 100px; }
 .group_block { border: 1px solid #ddd; padding: 10px; background-color: #eee; }
 .remove_link { margin-left: 10px; }
+
+textarea { width: 180px; }

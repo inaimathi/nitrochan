@@ -23,7 +23,7 @@ inner_body() ->
     [
      #crumbs{},
      #h1 { text="User Administration" },
-     #panel{class=group_box,
+     #panel{class=users_box,
 	    body=[#label{text="Users"},
 		  #textbox{id=filter, postback=filter},
 		  #panel{class=group_block, 

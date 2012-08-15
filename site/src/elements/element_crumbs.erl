@@ -10,6 +10,8 @@ render_element(Rec = #crumbs{}) ->
     #panel{class=breadcrumb_trail,
 	   body=[#link {text="Home", url="/"}, " / ", 
 		 links(Rec#crumbs.board, Rec#crumbs.thread),
+		 #span{show_if=(wf:user() /= undefined), class=admin_links,
+		       body=[#link{text="Profile", url="/profile"}]},
 		 #span{show_if=util:admin_p(), class=admin_links,
 		       body=[#link{text="Manage Users", url="/admin/users"}, 
 			     #link{text="New Board", url="/admin/boards/new"}]},

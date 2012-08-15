@@ -5,7 +5,11 @@
 
 main() -> #template { file="./site/templates/bare.html" }.
 title() -> "Manual RSA Login".
-body() -> #container_12{body=[#grid_8 { alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]}.
+body() -> 
+    case wf:user() of
+	undefined -> #container_12{body=[#grid_8{alpha=true, prefix=2, suffix=2, omega=true, body=inner_body()}]};
+	_ -> wf:redirect_from_login(wf:header(referer))
+    end.
 
 inner_body() -> 
     Val = [{txt_username, [#is_required {text="You're definitely not ` `. I know that guy."}]}],
@@ -35,12 +39,7 @@ event(send_signed) ->
             re:replace(wf:q(txt_auth_response), "\\\\n", "\n", [global, {return, list}])],
     Res = rpc:call(?AUTH_NODE, rsa_auth, verify, Args),
     case Res of
-        {_Id, User, Groups} -> wf:session(admin_groups, Groups),
-			       wf:user(User),
-			       case lists:member(admin, Groups) of
-				   true -> wf:role(admin, true);
-				   _ -> false
-			       end,
+        {Id, User, Groups} -> util:populate_session(Id, User, Groups),
 			       wf:redirect_from_login("/");
         _ -> wf:update(auth_token, [ #span {text="Authentication fail. Try it again."} ])
     end.
