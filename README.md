@@ -19,25 +19,37 @@ See notes.org for a complete TODO list so far. Also, feel free to contribute.
 
 #### Dependencies
 
+Because of the way it does preview image generation, Nitrochan needs to be installed on a POSIX compatible environment. It should work out of the box on Debian. it may take some manual installation on other distros. It should work without major tweaks on OS X, but you'll need to hunt down various libraries yourself. If you can get it running on Windows, it will probably involve building a lot of things from source, and tweaking code in a couple of places (let me know if you manage it).
+
 Nitrochan depends on
 
-###### Programs
+###### Things You Need To Install
 
-- [GNU Make](http://www.gnu.org/software/make/)
-- [Erlang](http://www.erlang.org/)
-- [GNU Screen](http://www.gnu.org/software/screen/)
-- [Python 2.x](http://www.python.org/download/releases/2.7.2/)
-- [imagemagick](http://www.imagemagick.org/script/index.php)
-- [git](http://git-scm.com/)
-- [Erlport](http://erlport.org/)
+- [git](http://git-scm.com/) (just for installation)
+- [GNU Make](http://www.gnu.org/software/make/) (just for the installation and start-up process)
+- [GNU Screen](http://www.gnu.org/software/screen/) (you can do without it if you want to script your own startup)
+- [Erlang](http://www.erlang.org/) (required)
+- [Python 2.x](http://www.python.org/download/releases/2.7.2/) (required)
+- [imagemagick](http://www.imagemagick.org/script/index.php) (you can do without it if you rewrite the preview generator) 
+- [openssl](http://www.openssl.org/) (required)
+- [swig](http://www.swig.org/) (required for m2crypto)
+- [libssl-dev](http://packages.debian.org/wheezy/libssl-dev) (required for m2crypto)
+- [Erlport](http://erlport.org/) (requird)
+- [m2crypto](http://chandlerproject.org/Projects/MeTooCrypto) (required)
 
-###### Libraries
+On Debian GNU/Linux, you should be able to do
+
+    apt-get install make erlang screen imagemagick git openssl libssl-dev swig python-setuptools python-m2crypto
+    easy_install erlport
+
+on your own for other distros, though that package name list should help.
+
+###### Things The Makefile Handles
 
 - [Nitrogen](http://nitrogenproject.com/)
 - [auth](https://github.com/Inaimathi/auth)
 - [common](https://github.com/Inaimathi/common)
 - [erlsha2](https://github.com/vinoski/erlsha2)
-- [m2crypto](http://chandlerproject.org/Projects/MeTooCrypto)
 
 #### Installation
 
@@ -46,7 +58,7 @@ If you've got GNU make and `git` installed, just run
     make install
     make mnesia-create
     
-Starting the application shoulr be fairly simple once its been installed; just run
+Starting the application should be fairly simple once its been installed; just run
 
     make start
     

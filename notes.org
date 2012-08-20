@@ -219,6 +219,15 @@
    - CLOSING NOTE [2012-08-13 Mon 14:25] \\
      -If a user is logged in, the register page will now redirect them to /
 ** TODO [#B] Comment markup components
+*** TODO General markup system
+    - Use the Erlang-style {[command-name], param1, param2 ... param-n} syntax
+    - {link, "blah blah blah blah"} = a link
+    - {spoiler, "derpaherpaderp"} = spoiler text
+    - {1234, 4567, 8901} = link to a comment (auto generate these with the comment id link
+    - {b, "some text"} = bold text
+    - {h1, "header 1"} 
+    - Do the above for most HTML formatting tags
+
 *** TODO Link to comment
     These should be gathered up and used as response links.
     See "comment responses" task for details on requirements.

@@ -9,6 +9,10 @@ erl_start = -eval 'lists:map(fun (App) -> application:load(App), application:sta
 
 erl_stop = -s init stop
 
+define clone_component
+	git clone $(1); cd $(2); make; cd ..
+endef
+
 define mnesia_create
 	$(ERL) -name $(1) -eval 'mnesia:create_schema([node()]).' $(erl_start) -eval 'users:create(), groups:create(), board:create(), mod_log:create(), rsa_auth:create().' $(erl_stop)
 endef
@@ -24,6 +28,11 @@ install:
 ##	easy_install erlport
 	git clone git://github.com/nitrogen/nitrogen.git
 	cd nitrogen; make rel_yaws; cd ..
+	cd deps
+	$(call clone_component, git://github.com/Inaimathi/common.git, common)
+	$(call clone_component, git://github.com/Inaimathi/auth.git, auth)
+	$(call clone_component, git://github.com/vinoski/erlsha2.git, erlsha2)
+	cd auth; make gen_key; cd ../..
 	make push-site
 
 mnesia-create:
